@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Story · 物語 — Hero's Proof</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka:wght@400;500;600;700&family=Zen+Maru+Gothic:wght@400;500;700;900&family=Kosugi+Maru&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#3a2558;--bg2:#2a1845;--panel2:#1e1235;
+  --cream:#f5eedc;--card-bg:rgba(245,238,220,0.97);--border-gold:rgba(245,158,11,0.25);
+  --purple:#9060c0;--purple-light:#c8a0e0;--purple-pale:#ede0f8;--purple-dark:#4a3870;
+  --gold:#c9a030;--gold-light:#f0d060;--gold-pale:#f8f0c0;
+  --brown:#5c2810;--text-dark:#1e1235;--text-soft:#3a2558;--text-muted:rgba(200,160,224,.78);
+  --green:#4a9040;--red:#c83030;--sky:#2858b8;--shadow:rgba(0,0,0,0.4);
+  --paper:#efe3c6;--paper-2:#e7d8b5;--paper-edge:#d8c69c;
+  --ink:#352714;--ink-soft:#6a543a;--gold-deep:#8a6712;--gold-deep2:#735410;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;}
+body{font-family:'Fredoka','Kosugi Maru','Zen Maru Gothic',sans-serif;background:var(--bg);color:var(--cream);min-height:100vh;overflow-x:hidden;}
+body.no-scroll{overflow:hidden;}
+button{font-family:inherit;cursor:pointer;}
+a{color:inherit;}
+:focus-visible{outline:3px solid var(--gold-light);outline-offset:2px;border-radius:6px;}
+ruby{ruby-position:over;}
+ruby rt{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.52em;color:var(--gold-deep);font-weight:600;line-height:1;}
+
+.starfield{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.starfield span{position:absolute;animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s);display:flex;align-items:center;justify-content:center;font-size:var(--sz,1rem);color:var(--col,#fde68a);text-shadow:0 0 6px var(--col,#fde68a);line-height:1;}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.3) rotate(0deg)}50%{opacity:.9;transform:scale(1) rotate(20deg)}}
+
+.page{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 16px 80px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px;}
+.back-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:.92rem;font-weight:600;color:var(--purple-light);background:rgba(20,12,38,.5);border:1px solid rgba(201,160,48,.3);padding:9px 16px;border-radius:30px;transition:background .2s;}
+.back-link:hover{background:rgba(74,56,112,.7);}
+
+.story-header{text-align:center;padding:18px 0 26px;position:relative;transition:opacity .2s;}
+.story-header:hover{opacity:.85;}
+.story-header::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:220px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.story-eyebrow{font-family:'Press Start 2P',monospace;font-size:clamp(.42rem,1.9vw,.58rem);color:var(--gold-light);letter-spacing:.18em;opacity:.75;margin-bottom:14px;text-shadow:0 0 20px rgba(240,208,96,.4);}
+.story-title{font-family:'Press Start 2P',monospace;font-size:clamp(1.05rem,4.2vw,1.65rem);color:#fff;line-height:1.5;text-shadow:0 0 36px rgba(200,160,224,.55),0 0 70px rgba(144,96,192,.3);}
+.story-title .jp{display:block;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:clamp(1.05rem,3.1vw,1.5rem);color:var(--gold-light);letter-spacing:.2em;margin-top:10px;text-shadow:0 0 20px rgba(240,208,96,.4);}
+
+.tabs{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:28px 0 24px;}
+.tab{background:rgba(20,12,38,.5);border:1px solid rgba(201,160,48,.3);color:var(--purple-light);border-radius:30px;padding:12px 22px;font-size:.98rem;font-weight:600;line-height:1.2;transition:background .2s,color .2s,border-color .2s,transform .15s;}
+.tab .jp{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.82rem;opacity:.8;margin-left:5px;}
+.tab:hover{background:rgba(74,56,112,.7);}
+.tab:active{transform:scale(.97);}
+.tab.active{background:linear-gradient(135deg,var(--purple-dark),var(--purple));color:#fff;border-color:var(--gold-light);box-shadow:0 0 18px rgba(144,96,192,.4);}
+.panel{display:none;animation:fadeUp .4s ease;}
+.panel.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.reader-title{text-align:center;font-size:clamp(1rem,3vw,1.32rem);font-weight:700;color:#fff;line-height:1.3;margin-bottom:14px;}
+.reader-title .jp{display:block;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:clamp(.86rem,2.4vw,1.05rem);color:var(--gold-light);margin-top:3px;}
+
+.level-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.level-label{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.92rem;color:var(--text-muted);font-weight:700;}
+.level-seg{display:inline-flex;background:rgba(20,12,38,.5);border:1px solid rgba(201,160,48,.3);border-radius:30px;padding:4px;}
+.level-seg button{border:none;background:transparent;color:var(--purple-light);padding:8px 18px;border-radius:26px;font-size:.92rem;font-weight:600;line-height:1.25;transition:background .2s,color .2s;}
+.level-seg button small{display:block;font-size:.72rem;opacity:.75;font-weight:500;}
+.level-seg button.active{background:linear-gradient(135deg,var(--gold-deep),var(--gold));color:#fff7e0;}
+
+/* ════════════ STORYBOOK ════════════ */
+.book{position:relative;width:100%;background:linear-gradient(158deg,var(--paper) 0%,var(--paper-2) 100%);border:1px solid var(--paper-edge);border-radius:20px;box-shadow:0 10px 44px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.55);padding:14px 16px 18px;overflow:hidden;}
+.book::before{content:'';position:absolute;inset:0;pointer-events:none;border-radius:20px;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,255,255,.4),transparent 60%);}
+.book:fullscreen,.book.theater{border-radius:0;padding:24px;}
+.book.theater{position:fixed;inset:0;z-index:1000;width:100vw;height:100vh;display:flex;flex-direction:column;}
+.book.big .book-text{font-size:clamp(1.5rem,3.6vmin,2.5rem);}
+.book.big .book-jp{font-size:clamp(1.15rem,2.6vmin,1.7rem);}
+.book.big .book-page{flex:1;height:auto;}
+
+.book-top{position:relative;z-index:3;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.book-counter{font-family:'Press Start 2P',monospace;font-size:.5rem;color:var(--gold-deep2);letter-spacing:.1em;margin-right:auto;}
+.pbtn{background:rgba(255,255,255,.45);border:1px solid rgba(138,103,18,.45);color:var(--ink);border-radius:10px;padding:8px 13px;font-size:.82rem;font-weight:600;letter-spacing:.02em;line-height:1.2;transition:background .2s,transform .15s;}
+.pbtn:hover{background:rgba(255,255,255,.8);}
+.pbtn:active{transform:scale(.95);}
+.pbtn.on{background:linear-gradient(135deg,var(--gold-deep),var(--gold));border-color:var(--gold-deep2);color:#fff7e0;}
+.book-speed{display:inline-flex;gap:4px;align-items:center;}
+.book-speed .lab{font-size:.86rem;color:var(--gold-deep2);}
+.book-speed button{background:rgba(255,255,255,.45);border:1px solid rgba(138,103,18,.4);color:var(--ink);border-radius:18px;padding:6px 11px;font-size:.8rem;font-weight:600;transition:background .2s,transform .12s;}
+.book-speed button.active{background:linear-gradient(135deg,var(--gold-deep),var(--gold));border-color:var(--gold-deep2);color:#fff7e0;}
+.book-speed button:active{transform:scale(.93);}
+
+.book-progress{position:relative;z-index:3;height:6px;background:rgba(138,103,18,.18);border-radius:6px;overflow:hidden;margin-bottom:14px;}
+.book-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold-deep),var(--gold));transition:width .4s ease;}
+
+.book-page{position:relative;z-index:2;height:clamp(220px,34vh,330px);overflow-y:auto;cursor:pointer;padding:14px 6px;scrollbar-width:thin;scrollbar-color:rgba(138,103,18,.4) transparent;}
+.book-page::-webkit-scrollbar{width:8px;}
+.book-page::-webkit-scrollbar-thumb{background:rgba(138,103,18,.4);border-radius:8px;}
+.book-text{font-family:'Fredoka',sans-serif;font-size:clamp(1.25rem,3.6vw,1.85rem);line-height:2.05;color:var(--ink-soft);text-align:left;letter-spacing:.005em;}
+.sentence{transition:filter .45s ease,opacity .45s ease,color .3s;}
+.sentence.seen{opacity:.5;filter:blur(1.4px);}
+.sentence:not(.active):not(.seen){opacity:.32;filter:blur(2.6px);}
+.sentence.active{opacity:1;filter:none;color:var(--ink);font-weight:600;background:rgba(201,160,48,.2);-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:5px;padding:.04em .12em;}
+.sentence .vocab{display:inline;background:none;border:none;padding:0;font:inherit;cursor:pointer;color:var(--gold-deep);font-weight:700;border-bottom:2px dotted var(--gold-deep);}
+.sentence.active .vocab:hover{color:var(--gold-deep2);background:rgba(138,103,18,.16);border-radius:4px;}
+
+.book-jp{position:relative;z-index:3;margin-top:12px;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:clamp(.98rem,2.7vw,1.25rem);color:var(--ink);line-height:1.95;background:rgba(255,255,255,.45);border:1px solid rgba(138,103,18,.3);border-radius:12px;padding:11px 15px;display:none;}
+.book-jp.show{display:block;animation:fadeUp .3s ease;}
+.book-jp .tag{font-family:'Fredoka',sans-serif;font-size:.74rem;font-weight:700;color:var(--gold-deep2);letter-spacing:.08em;display:block;margin-bottom:3px;}
+
+.book-gloss{position:relative;z-index:3;margin-top:10px;background:linear-gradient(135deg,#fff8e6,#f3e6c4);border:1px solid var(--gold-deep);border-radius:12px;padding:11px 15px;display:none;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.book-gloss.show{display:flex;animation:fadeUp .25s ease;}
+.book-gloss .w{font-weight:700;color:var(--gold-deep2);font-size:1.2rem;}
+.book-gloss .g{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:1.05rem;color:var(--ink);}
+
+.book-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:46px;height:62px;border-radius:12px;background:rgba(255,255,255,.55);border:1px solid rgba(138,103,18,.45);color:var(--gold-deep2);font-size:1.5rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .2s,opacity .25s;}
+.book-nav:hover{background:#fff;}
+.book-nav.off{opacity:0;pointer-events:none;}
+.book-prev{left:8px;} .book-fwd{right:8px;}
+
+.book-overlay,.book-end{position:absolute;inset:0;z-index:20;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:24px;background:linear-gradient(158deg,rgba(239,227,198,.97),rgba(220,201,160,.97));transition:opacity .5s;}
+.book-end{z-index:18;display:none;}
+.book-end.show{display:flex;animation:fadeUp .5s ease;}
+.book-overlay.fade{opacity:0;pointer-events:none;}
+.ov-emoji{font-size:3.4rem;animation:bob 3s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.ov-title{font-family:'Press Start 2P',monospace;font-size:clamp(.58rem,2.5vw,.82rem);color:var(--gold-deep2);line-height:2;}
+.ov-sub{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:clamp(.92rem,2.5vw,1.1rem);color:var(--ink);line-height:1.8;}
+.start-btn{background:linear-gradient(135deg,var(--gold-deep),var(--gold));border:none;border-radius:30px;padding:15px 38px;font-family:'Press Start 2P',monospace;font-size:clamp(.56rem,2.2vw,.72rem);color:#fff7e0;letter-spacing:.08em;box-shadow:0 5px 20px rgba(138,103,18,.45);transition:transform .2s,box-shadow .2s;}
+.start-btn:hover{transform:translateY(-3px);box-shadow:0 9px 28px rgba(138,103,18,.55);}
+.start-btn:active{transform:translateY(1px);}
+.book-end-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+
+.reader-hint{text-align:center;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.92rem;color:var(--text-muted);margin-top:14px;line-height:1.8;}
+.reader-hint b{color:var(--gold-light);}
+
+.shelf-heading{font-family:'Press Start 2P',monospace;font-size:clamp(.56rem,2.1vw,.74rem);color:var(--gold-light);text-align:center;letter-spacing:.12em;margin:50px 0 18px;text-shadow:0 0 16px rgba(240,208,96,.4),2px 2px 0 var(--brown);}
+.shelf-heading .jp{display:block;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:1rem;color:var(--purple-light);margin-top:5px;font-weight:700;text-shadow:none;}
+.shelf{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
+.side-card{display:flex;gap:15px;text-decoration:none;color:var(--text-dark);background:var(--card-bg);border:1px solid var(--border-gold);border-radius:18px;padding:17px;box-shadow:0 4px 20px var(--shadow);transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;text-align:left;}
+.side-card:hover{transform:translateY(-6px);box-shadow:0 12px 32px rgba(0,0,0,.45);}
+.side-cover{flex:0 0 90px;height:116px;border-radius:10px;object-fit:cover;background:linear-gradient(160deg,#5a3a8a,#2a1845);display:flex;align-items:center;justify-content:center;font-size:2.6rem;border:1px solid rgba(201,160,48,.4);}
+.side-body h4{font-size:1.12rem;font-weight:700;color:var(--text-dark);line-height:1.3;}
+.side-body h4 .jp{display:block;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.9rem;color:var(--text-soft);margin-top:2px;}
+.side-body p{font-size:.88rem;color:var(--text-soft);line-height:1.6;margin-top:7px;}
+.side-pill{display:inline-block;margin-top:9px;font-size:.72rem;font-weight:700;background:rgba(144,96,192,.16);color:#7a4ca8;border:1px solid rgba(144,96,192,.35);border-radius:20px;padding:3px 11px;}
+.side-soon{opacity:.72;cursor:default;}
+.side-soon:hover{transform:none;box-shadow:0 4px 20px var(--shadow);}
+.side-now{outline:2px solid var(--gold-light);outline-offset:2px;}
+
+.npc-note{background:rgba(245,238,220,.06);border:1px dashed rgba(201,160,48,.35);border-radius:16px;padding:20px;margin-top:22px;text-align:center;transition:border-color .2s,background .2s;}
+.npc-note:hover{background:rgba(245,238,220,.1);border-color:rgba(201,160,48,.55);}
+.npc-note .em{font-size:1.8rem;letter-spacing:.2em;display:block;margin-bottom:9px;}
+.npc-note p{font-size:.96rem;color:var(--purple-light);line-height:1.75;}
+.npc-note .jp{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;color:var(--text-muted);}
+
+.notes-intro{text-align:center;color:var(--purple-light);font-size:1rem;line-height:1.8;margin-bottom:26px;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;}
+.note-card{background:var(--card-bg);border:1px solid var(--border-gold);border-radius:18px;padding:20px 22px;margin-bottom:15px;color:var(--text-dark);box-shadow:0 4px 20px var(--shadow);}
+.note-card h3{font-size:1.2rem;color:var(--text-dark);margin-bottom:5px;}
+.note-card h3 .jp{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.92rem;color:var(--purple);margin-left:6px;font-weight:600;}
+.note-card .sub{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.9rem;color:var(--text-soft);margin-bottom:13px;}
+.ex{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0;}
+.ex code{background:rgba(144,96,192,.12);border:1px solid rgba(144,96,192,.3);border-radius:8px;padding:6px 11px;font-family:'Fredoka',monospace;font-size:.96rem;color:#5a3a8a;font-weight:600;}
+.ex code b{color:var(--red);}
+.note-card p{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.94rem;color:var(--text-soft);line-height:1.85;}
+.note-card .lead{font-weight:700;color:var(--text-dark);}
+.vocab-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:11px;margin-top:10px;}
+.vchip{background:rgba(138,103,18,.07);border:1px solid rgba(138,103,18,.28);border-radius:12px;padding:11px 13px;}
+.vchip .en{font-weight:700;color:var(--gold-deep2);font-size:1.08rem;}
+.vchip .kana{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.82rem;color:var(--purple);margin-top:2px;}
+.vchip .ja{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.9rem;color:var(--text-dark);margin-top:2px;}
+.study-teaser{text-align:center;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.86rem;color:var(--text-muted);margin-top:18px;line-height:1.7;}
+
+footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgba(201,160,48,.12);}
+.footer-text{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.86rem;color:rgba(217,201,168,.45);letter-spacing:.08em;line-height:2;}
+.footer-text span{color:rgba(201,160,48,.45);}
+
+.hub-row{text-align:center;margin-top:50px;}
+.btn-hub{
+  font-family:'Fredoka',sans-serif;font-size:.9rem;font-weight:600;
+  color:rgba(200,160,224,.75);background:transparent;
+  border:1px solid rgba(167,139,250,.25);border-radius:50px;padding:9px 24px;
+  cursor:pointer;text-decoration:none;display:inline-block;
+  transition:color .2s,border-color .2s;
+}
+.btn-hub:hover{color:var(--gold-light);border-color:rgba(245,158,11,.4);}
+
+@media(max-width:560px){
+  .book-page{height:clamp(210px,38vh,300px);}
+  .book-nav{width:38px;height:52px;font-size:1.3rem;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01s!important;}
+  html{scroll-behavior:auto;}
+  .sentence:not(.active){filter:none;opacity:.4;}
+}
+</style>
+</head>
+<body>
+
+<div class="starfield" id="starfield"></div>
+
+<div class="page">
+
+  <a class="story-header" href="https://herosproof.github.io" style="text-decoration:none;display:block;cursor:pointer;">
+    <p class="story-eyebrow">✦ Hero's Proof · 勇者の証 ✦</p>
+    <h1 class="story-title">Story<span class="jp">物語(ものがたり)</span></h1>
+  </a>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="prologue" role="tab">📖 Stories<span class="jp">お話</span></button>
+    <button class="tab" data-tab="notes" role="tab">📚 Words &amp; Grammar<span class="jp">ことば・文法</span></button>
+  </nav>
+
+  <!-- ════════════ STORIES ════════════ -->
+  <section class="panel active" id="panel-prologue" role="tabpanel">
+
+    <h2 class="reader-title" id="reader-title"></h2>
+
+    <div class="level-row">
+      <span class="level-label">レベル:</span>
+      <div class="level-seg" id="level-seg">
+        <button class="active" data-level="easy">やさしい<small>Easy</small></button>
+        <button data-level="story">ものがたり<small>Story</small></button>
+      </div>
+    </div>
+
+    <div class="book" id="book">
+      <div class="book-top">
+        <span class="book-counter" id="book-counter"></span>
+        <button class="pbtn" id="bk-jp" aria-pressed="false">あ 日本語</button>
+        <button class="pbtn" id="bk-auto" aria-pressed="false">▶ Auto</button>
+        <span class="book-speed" aria-label="Reading speed">
+          <span class="lab">🔊</span>
+          <button data-rate="0.5">0.5×</button>
+          <button data-rate="0.75">0.75×</button>
+          <button class="active" data-rate="1">1×</button>
+        </span>
+        <button class="pbtn" id="bk-fs">⛶</button>
+        <button class="pbtn" id="bk-restart">↺</button>
+      </div>
+
+      <div class="book-progress"><i id="bk-bar"></i></div>
+
+      <button class="book-nav book-prev off" id="bk-prev" aria-label="Back / まえ">‹</button>
+      <button class="book-nav book-fwd off" id="bk-fwd" aria-label="Next / つぎ">›</button>
+
+      <div class="book-page" id="book-page" role="button" tabindex="0" aria-label="Next sentence / つぎの文へ">
+        <p class="book-text" id="book-text"></p>
+      </div>
+
+      <div class="book-jp" id="bk-jp-text" lang="ja"><span class="tag">日本語</span><span id="bk-jp-body"></span></div>
+      <div class="book-gloss" id="bk-gloss"><span class="w" id="bk-gloss-w"></span><span class="g" id="bk-gloss-g"></span></div>
+
+      <div class="book-end" id="bk-end">
+        <div class="ov-emoji">💜</div>
+        <div class="ov-title">The End<br>おわり</div>
+        <p class="ov-sub">Nice reading!<br>よく読(よ)めました！</p>
+        <div class="book-end-actions">
+          <button class="pbtn" id="bk-replay">↺ Read again · もう一度</button>
+          <button class="pbtn on" id="bk-more">📚 More stories · ほかのお話</button>
+        </div>
+      </div>
+
+      <div class="book-overlay" id="bk-overlay">
+        <div class="ov-emoji" id="ov-emoji">📖</div>
+        <div class="ov-title" id="ov-title"></div>
+        <p class="ov-sub" id="ov-sub"></p>
+        <button class="start-btn" id="bk-start">▶ READ · よむ</button>
+      </div>
+    </div>
+
+    <p class="reader-hint">
+      Only the glowing sentence is in focus. Use the arrows (or tap) to read on. Tap a <b>gold word</b> for its meaning!<br>
+      光っている文だけがはっきり見える。矢印(やじるし)かタップで次(つぎ)へ。<b>金色(きんいろ)の言葉(ことば)</b>で意味(いみ)が出(で)るよ！
+    </p>
+
+    <h2 class="shelf-heading">✦ Stories<span class="jp">お話のたな</span></h2>
+    <div class="shelf" id="story-shelf">
+      <div class="side-card" data-story="prologue" role="button" tabindex="0">
+        <span class="side-cover">📖</span>
+        <div class="side-body">
+          <h4>The Day the World Cracked<span class="jp">世界(せかい)が割(わ)れた日(ひ)</span></h4>
+          <p>The prologue — Lumi's story, before the game begins.<br>プロローグ。ゲームの前(まえ)の、ルミのお話(はなし)。</p>
+          <span class="side-pill">📖 Prologue · プロローグ</span>
+        </div>
+      </div>
+
+      <div class="side-card" data-story="littlepeople" role="button" tabindex="0">
+        <span class="side-cover">🥳</span>
+        <div class="side-body">
+          <h4>The Little People's Big, BIG Party<span class="jp">コビトたちの おおきな おおきな パーティー</span></h4>
+          <p>A silly side story about flavors, friends, and one very confused goblin. 🍬🍋🧂🌶️<br>味(あじ)と仲間(なかま)の、おバカで楽(たの)しいお話(はなし)。</p>
+          <span class="side-pill">⭐ Side Story 1 · 番外編①</span>
+        </div>
+      </div>
+
+      <a class="side-card" href="assets/lumi-lights-the-way.pdf" target="_blank" rel="noopener">
+        <span class="side-cover">📖</span>
+        <div class="side-body">
+          <h4>Lumi Lights the Way<span class="jp">ルミがてらすみち</span></h4>
+          <p>Little Lumi's very first story — a bilingual picture book, made for Halloween! 🎃<br>小(ちい)さなルミの、はじめての絵本(えほん)。</p>
+          <span class="side-pill">🎃 Picture Book (PDF) · 絵本</span>
+        </div>
+      </a>
+
+      <div class="side-card side-soon">
+        <span class="side-cover">✏️</span>
+        <div class="side-body">
+          <h4>More tales soon<span class="jp">もっと、お話(はなし)を準備中(じゅんびちゅう)</span></h4>
+          <p>New side stories from Lumi's world are on the way!<br>ルミの世界(せかい)の新(あたら)しいお話(はなし)が、もうすぐ！</p>
+          <span class="side-pill">⚙ Coming soon · 準備中</span>
+        </div>
+      </div>
+    </div>
+
+    <a class="npc-note" href="characters.html" style="display:block;text-decoration:none;cursor:pointer;">
+      <span class="em">🧚 🧝 🍳 👑 👸 🐉</span>
+      <p>Want to meet the cast? Lumi, the Heroes, and every guardian are waiting! 💜<br>
+         <span class="jp">キャラクターに会(あ)いたい？ルミやヒーローたち、守護者(しゅごしゃ)みんなが待(ま)ってるよ。</span></p>
+      <span class="side-pill" style="display:inline-block;margin-top:11px;">🎭 Meet the Characters · キャラクターへ</span>
+    </a>
+  </section>
+
+  <!-- ════════════ WORDS & GRAMMAR ════════════ -->
+  <section class="panel" id="panel-notes" role="tabpanel">
+    <p class="notes-intro">プロローグに出(で)てきた言葉(ことば)と、中学(ちゅうがく)の英語(えいご)の予習(よしゅう)だよ！📚</p>
+
+    <div class="note-card">
+      <h3>📒 Word List<span class="jp">プロローグのたんご</span></h3>
+      <div class="vocab-grid" id="vocab-grid"></div>
+    </div>
+
+    <div class="note-card">
+      <h3>🕐 Past Tense<span class="jp">過去形(かこけい)</span></h3>
+      <p class="sub">「〜した」「〜だった」と、むかしのことを言(い)うとき、動詞(どうし)の形(かたち)が変(か)わるよ。</p>
+      <p class="lead">規則動詞(きそくどうし) — ルールどおり！</p>
+      <div class="ex"><code>help → help<b>ed</b></code><code>push → push<b>ed</b></code><code>crack → crack<b>ed</b></code></div>
+      <p>ほとんどの動詞(どうし)は、語尾(ごび)に <b>-ed</b> をつけるだけ！</p>
+      <p class="lead" style="margin-top:12px">不規則動詞(ふきそくどうし) — 形(かたち)が変(か)わる！</p>
+      <div class="ex"><code>find → found</code><code>go → went</code><code>feel → felt</code><code>say → said</code><code>is → was</code></div>
+      <p>これは覚(おぼ)えるしかない！でも中学(ちゅうがく)でたくさん練習(れんしゅう)するよ。</p>
+    </div>
+
+    <div class="note-card">
+      <h3>🚫 couldn't<span class="jp">〜できなかった</span></h3>
+      <div class="ex"><code>could = できた</code><code>couldn't = できなかった</code></div>
+      <p>"Lumi <b>couldn't</b> do it alone."（ルミは一人(ひとり)ではできなかった。）<br>couldn't のあとは、動詞(どうし)の原形(げんけい)だよ！</p>
+    </div>
+
+    <div class="note-card">
+      <h3>💪 anyway<span class="jp">それでも・とにかく</span></h3>
+      <p>"It might not be enough. But we're helping <b>anyway</b>."<br>（足(た)りないかもしれない。でも、とにかく助(たす)ける。）<br>あきらめない気持(きも)ちを表(あらわ)す言葉(ことば)。会話(かいわ)でもよく使(つか)うよ！</p>
+    </div>
+
+    <div class="note-card">
+      <h3>🎨 Adjective Order<span class="jp">形容詞(けいようし)のならび</span></h3>
+      <p>英語(えいご)は、名詞(めいし)の前(まえ)に形容詞(けいようし)をいくつでも並(なら)べられるよ。日本語(にほんご)と語順(ごじゅん)がちがうから気(き)をつけて！</p>
+      <div class="ex"><code>her <b>cracked, beautiful</b> world</code></div>
+      <p>日本語(にほんご):「割(わ)れた、美(うつく)しい 世界(せかい)」→ 英語(えいご)も形容詞(けいようし)が先(さき)、名詞(めいし)はあと！</p>
+    </div>
+
+    <p class="study-teaser">※ これはプロローグのための言葉(ことば)と文法(ぶんぽう)です。<br>もっと広(ひろ)い英語(えいご)の練習(れんしゅう)は、いつか別(べつ)の「スタディルーム」で！</p>
+  </section>
+
+  <div class="hub-row">
+    <a href="https://herosproof.github.io" class="btn-hub">🏠 Home / ホーム</a>
+  </div>
+
+  <footer>
+    <p class="footer-text">Hero's Proof <span>勇者の証</span><br>Made with 💜 for elementary English learners · 小学生の英語学習のために</p>
+  </footer>
+
+</div>
+
+<script>
+/* ── Starfield ── */
+(function(){
+  const sf=document.getElementById('starfield');
+  const glyphs=['✦','✧','⋆','✴','★','✸','·','✦','✧'];
+  const colors=['#f0d060','#c9a030','#d9c9a8','#f0d060','#c8a0e0','#f8f0c0'];
+  for(let i=0;i<60;i++){
+    const s=document.createElement('span');
+    const sz=(Math.random()*1.2+0.5).toFixed(2);
+    s.textContent=glyphs[Math.floor(Math.random()*glyphs.length)];
+    s.style.cssText=`top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*5}s;--delay:-${Math.random()*7}s;--sz:${sz}rem;--col:${colors[Math.floor(Math.random()*colors.length)]};`;
+    sf.appendChild(s);
+  }
+})();
+
+/* ── furigana: 漢字(かな) → ruby (small, above the text) ── */
+function ruby(s){return s.replace(/([\u4e00-\u9fff\u3005]+)\(([\u3040-\u309f\u30a0-\u30ffー]+)\)/g,'<ruby>$1<rt>$2</rt></ruby>');}
+/* walk a subtree and turn every 漢字(かな) text run into ruby */
+function rubifyTree(root){
+  const re=/[\u4e00-\u9fff\u3005]+\([\u3040-\u309f\u30a0-\u30ffー]+\)/;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){
+    if(!n.nodeValue||!re.test(n.nodeValue))return NodeFilter.FILTER_REJECT;
+    let p=n.parentNode;
+    while(p){const t=p.tagName;if(t==='RT'||t==='RUBY'||t==='SCRIPT'||t==='STYLE')return NodeFilter.FILTER_REJECT;p=p.parentNode;}
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  nodes.forEach(n=>{const span=document.createElement('span');span.innerHTML=ruby(n.nodeValue);n.parentNode.replaceChild(span,n);});
+}
+/* ── vocab token {word|reading / meaning} → tappable ── */
+function renderEN(s){return s.replace(/\{([^|}]+)\|([^}]*)\}/g,(m,w,g)=>`<button type="button" class="vocab" data-w="${w}" data-g="${g.replace(/"/g,'&quot;')}">${w}</button>`);}
+
+/* ── Tabs ── */
+const tabs=document.querySelectorAll('.tab');
+const panels={prologue:document.getElementById('panel-prologue'),notes:document.getElementById('panel-notes')};
+function showTab(name){
+  tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  Object.entries(panels).forEach(([k,p])=>p.classList.toggle('active',k===name));
+  if(name!=='prologue')stopBookAudio();
+}
+tabs.forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
+
+/* ════════════ STORYBOOK DATA ════════════
+   Everything lives in the STORY repo (served at /story/):
+     assets/voice/prologue/easy/pro_01.mp3 … pro_25.mp3
+     assets/voice/prologue/story/pro_01.mp3 …            (optional)
+     assets/voice/littlepeople/easy/lp_01.mp3 … lp_24.mp3
+     assets/voice/littlepeople/story/lp_01.mp3 …         (optional)
+     assets/lumi-lights-the-way.pdf
+   Missing files fail silently. English narration only; JP is shared by both levels.
+   (Character portraits now live in the separate CHARACTERS repo — see characters.html)
+*/
+const ASSET='assets/';
+const STORIES={
+  prologue:{
+    emoji:'📖',prefix:'pro',voiceId:'prologue',
+    titleEn:'The Day the World Cracked',titleJp:'世界(せかい)が割(わ)れた日(ひ)',
+    subEn:"Lumi's story, before the game begins.",subJp:'ゲームの前(まえ)の、ルミのお話(はなし)。',
+    beats:[
+      {easy:'This is Lumi. She is a {mage|メイジ / 魔法使(まほうつか)い}.', story:'This is Lumi. She is a {mage|メイジ / 魔法使(まほうつか)い}.', jp:'これはルミ。魔法使(まほうつか)いだよ。'},
+      {easy:'Lumi lives in a world of {magic|マジック / 魔法(まほう)}.', story:'Lumi lives in a beautiful world of {magic|マジック / 魔法(まほう)}.', jp:'ルミは魔法(まほう)の世界(せかい)に住(す)んでいる。'},
+      {easy:'A few years ago, a great danger came.', story:'A few years ago, a great danger came to her world.', jp:'数年前(すうねんまえ)、大(おお)きな危機(きき)がおとずれた。'},
+      {easy:'Lumi saved her whole {world|ワールド / 世界(せかい)}!', story:'Lumi was brave. She saved everyone!', jp:'ルミはみんなを救(すく)った！'},
+      {easy:'Everyone called her a {hero|ヒーロー / 英雄(えいゆう)}.', story:'After that day, everyone called her a {hero|ヒーロー / 英雄(えいゆう)}.', jp:'その日(ひ)から、みんなが彼女(かのじょ)をヒーローと呼(よ)んだ。'},
+      {easy:'She became a {guardian|ガーディアン / 守護者(しゅごしゃ)}.', story:'She became a {guardian|ガーディアン / 守護者(しゅごしゃ)} — a keeper of a {crystal|クリスタル / 水晶(すいしょう)}.', jp:'彼女(かのじょ)は守護者(しゅごしゃ)になった。水晶(すいしょう)を守(まも)る者(もの)。'},
+      {easy:'She keeps the purple {crystal|クリスタル / 水晶(すいしょう)} safe.', story:'Lumi keeps the purple crystal safe. There are five in all.', jp:'ルミは紫(むらさき)の水晶(すいしょう)を守(まも)っている。水晶(すいしょう)は全部(ぜんぶ)で五(いつ)つ。'},
+      {easy:'One day, Lumi is in {Advanced|アドバンスト / 上級(じょうきゅう)の} Magic class.', story:'One day, in {Advanced|アドバンスト / 上級(じょうきゅう)の} Magic class, the teacher gave a warning.', jp:'ある日(ひ)、上級(じょうきゅう)魔法(まほう)のクラスにいた。'},
+      {easy:'The teacher says, "Don\u2019t push too hard!"', story:'"Feel the world," he said. "But do not push too hard."', jp:'先生(せんせい)が言(い)った。「世界(せかい)を感(かん)じて。でも、無理(むり)はしないで。」'},
+      {easy:'Lumi thinks, "I can do this!"', story:'"I can do this!" Lumi thought.', jp:'「わたしならできる！」とルミは思(おも)った。'},
+      {easy:'She pushes\u2026 too hard.', story:'She pushed\u2026 a little too hard.', jp:'彼女(かのじょ)は、ちょっとだけ力(ちから)を入(い)れすぎた。'},
+      {easy:'CRACK! Four {cracks|クラック / ひび・裂(さ)け目(め)} appear!', story:'CRACK! Four {cracks|クラック / ひび・裂(さ)け目(め)} tore across the world.', jp:'バリッ！世界(せかい)に四(よっ)つのひびが開(ひら)いた！'},
+      {easy:'They open in the Castle, Forest, Mountain, and Sky.', story:'They opened in the Castle, the Forest, the Mountain, and the Sky.', jp:'ひびは、城(しろ)・森(もり)・山(やま)・空(そら)に開(ひら)いた。'},
+      {easy:'The other guardians start to act strange.', story:'The other guardians began to act strange.', jp:'ほかの守護者(しゅごしゃ)たちが、おかしくなっていく。'},
+      {easy:'"I broke the world. I must fix it," she thinks.', story:'"I broke the world," she thought. "So I have to fix it."', jp:'「わたしが世界(せかい)を壊(こわ)した。だから直(なお)さなきゃ」と思(おも)った。'},
+      {easy:'Lumi tries to fix it {alone|アローン / ひとりで}.', story:'Lumi tried to fix it {alone|アローン / ひとりで}.', jp:'ルミは一人(ひとり)で直(なお)そうとした。'},
+      {easy:'But she can\u2019t do it.', story:'But she couldn\u2019t do it by herself.', jp:'でも、一人(ひとり)ではできなかった。'},
+      {easy:'Her friends come. "We\u2019re helping {anyway|エニウェイ / とにかく}!"', story:'Then her friends came. "We\u2019re helping {anyway|エニウェイ / とにかく}," they said.', jp:'そこへ友達(ともだち)が来(き)た。「とにかく手伝(てつだ)うよ」と言(い)った。'},
+      {easy:'Together, they slow the cracks down.', story:'Together, they slowed the cracks down — but they needed more help.', jp:'みんなで、ひびの広(ひろ)がりを遅(おく)らせた。でも、もっと助(たす)けが必要(ひつよう)。'},
+      {easy:'One night, Lumi finds faint {signals|シグナル / 信号(しんごう)}.', story:'Late one night, Lumi found faint {signals|シグナル / 信号(しんごう)}.', jp:'ある夜(よる)おそく、ルミはかすかな信号(しんごう)を見(み)つけた。'},
+      {easy:'{Heroes|ヒーローズ / ヒーローたち} — from another world!', story:'{Heroes|ヒーローズ / ヒーローたち} — from a whole other world!', jp:'ヒーローたちだ — べつの世界(せかい)の！'},
+      {easy:'"If I build an {anchor|アンカー / 錨(いかり)}, I can call them!"', story:'"If I build a strong {anchor|アンカー / 錨(いかり)}, I can call them," she said.', jp:'「強(つよ)い錨(いかり)を作(つく)れば、呼(よ)べる」と彼女(かのじょ)は言(い)った。'},
+      {easy:'It is a little {reckless|レックレス / 無謀(むぼう)な}. She will do it anyway.', story:'It was a little {reckless|レックレス / 無謀(むぼう)な}. She decided to do it anyway.', jp:'ちょっと無謀(むぼう)かも。でも、やると決(き)めた。'},
+      {easy:'Lumi smiles. "Tomorrow. I\u2019ll call them tomorrow."', story:'Lumi smiled at her cracked, beautiful world. "Tomorrow," she said.', jp:'ルミは美(うつく)しい世界(せかい)に微笑(ほほえ)んだ。「明日(あした)、呼(よ)ぼう。」'},
+      {easy:'And that is where YOUR story begins.', story:'And that is where YOUR story begins.', jp:'そして、ここから君(きみ)たちの物語(ものがたり)が始(はじ)まる。'},
+    ]
+  },
+  littlepeople:{
+    emoji:'🥳',prefix:'lp',voiceId:'littlepeople',
+    titleEn:"The Little People's Big, BIG Party",titleJp:'コビトたちの おおきな おおきな パーティー',
+    subEn:'Side Story 1 · A very silly tale. 🥳',subJp:'番外編(ばんがいへん)①・とってもおバカなお話(はなし)。',
+    beats:[
+      {easy:'Deep in the {forest|フォレスト / 森(もり)}, there are Little People.', story:'Deep in the {forest|フォレスト / 森(もり)} lived the Little People.', jp:'森(もり)の奥(おく)に、コビトたちがいる。'},
+      {easy:'They are very small, and very {energetic|エナジェティック / 元気(げんき)な}!', story:'They were very small, and very {energetic|エナジェティック / 元気(げんき)な}!', jp:'彼(かれ)らはとても小(ちい)さくて、とても元気(げんき)！'},
+      {easy:'And they LOVE {parties|パーティー / パーティー}! 🥳', story:'And they LOVED {parties|パーティー / パーティー}! 🥳', jp:'そして、パーティーが大好(だいす)き！'},
+      {easy:'Today is party day! Why? No reason.', story:'Today was party day. Why? No reason at all.', jp:'今日(きょう)はパーティーの日(ひ)！理由(りゆう)は…ない。'},
+      {easy:'It is just Tuesday. 😄', story:'It was just a Tuesday. 😄', jp:'ただの火曜日(かようび)だから。'},
+      {easy:'The {decorations|デコレーション / かざり} are\u2026 interesting.', story:'The {decorations|デコレーション / かざり} were\u2026 interesting.', jp:'かざりは…なんだか、おもしろい。'},
+      {easy:'The {banner|バナー / 横断幕(おうだんまく)} says: "PATY."', story:'The {banner|バナー / 横断幕(おうだんまく)} said: "PATY."', jp:'横断幕(おうだんまく)には「PATY」と書(か)いてある。'},
+      {easy:'They ran out of room for the "R." 😬', story:'They had run out of room for the "R." 😬', jp:'「R」を書(か)くスペースが、なくなっちゃった。'},
+      {easy:'Wumble makes a "star" out of rocks.', story:'Wumble made a "star" out of rocks.', jp:'ウンブルは石(いし)で「星(ほし)」を作(つく)った。'},
+      {easy:'It looks like a turnip. But Wumble says, "It\u2019s a star!"', story:'It looked like a turnip. But Wumble said, "It\u2019s a star!"', jp:'カブみたいに見(み)える。でもウンブルは「星(ほし)だ！」と言(い)う。'},
+      {easy:'No one argues with Wumble. 😶', story:'No one argued with Wumble. 😶', jp:'誰(だれ)もウンブルに反論(はんろん)しない。'},
+      {easy:'Two hours before the party, Pip asks a question.', story:'Two hours before the party, Pip asked a question.', jp:'パーティーの2時間前(じかんまえ)、ピップがたずねた。'},
+      {easy:'"\u2026Who is bringing the food?" 😶', story:'"\u2026Who is bringing the food?" 😶', jp:'「…食(た)べ物(もの)は、誰(だれ)が持(も)ってくるの？」'},
+      {easy:'Silence. Nobody has any food!', story:'Silence. Nobody had any food!', jp:'しーん。誰(だれ)も食(た)べ物(もの)を持(も)っていない！'},
+      {easy:'{Emergency|エマージェンシー / 緊急事態(きんきゅうじたい)}! They need food NOW! 🚨', story:'{Emergency|エマージェンシー / 緊急事態(きんきゅうじたい)}! They needed food right away! 🚨', jp:'緊急事態(きんきゅうじたい)！今(いま)すぐ食(た)べ物(もの)がいる！'},
+      {easy:'Just then, the {Heroes|ヒーローズ / ヒーローたち} arrive!', story:'Just then, the {Heroes|ヒーローズ / ヒーローたち} arrived!', jp:'ちょうどそのとき、ヒーローたちが到着(とうちゃく)！'},
+      {easy:'"Please help! We have a party, but no food!"', story:'"Please help! We have a party, but no food!"', jp:'「助(たす)けて！パーティーなのに、食(た)べ物(もの)がないの！」'},
+      {easy:'The Heroes taste everything.', story:'The Heroes tasted everything.', jp:'ヒーローたちは、全部(ぜんぶ)味見(あじみ)した。'},
+      {easy:'"This is {sweet|スイート / あまい}!" 🍬 "This is {sour|サワー / すっぱい}!" 🍋', story:'"This one is {sweet|スイート / あまい}!" 🍬 "This one is {sour|サワー / すっぱい}!" 🍋', jp:'「これは甘(あま)い！」「これは酸(す)っぱい！」'},
+      {easy:'"This is {salty|ソルティ / しょっぱい}!" 🧂 "This is {spicy|スパイシー / からい}!" 🌶️', story:'"This one is {salty|ソルティ / しょっぱい}!" 🧂 "This one is {spicy|スパイシー / からい}!" 🌶️', jp:'「これはしょっぱい！」「これは辛(から)い！」'},
+      {easy:'Elder Bimble wants to mix all four. The Heroes say, "Please\u2026 no."', story:'Elder Bimble wanted to mix all four. The Heroes said, "Please\u2026 no."', jp:'ビンブル長老(ちょうろう)は4つ全部(ぜんぶ)混(ま)ぜたい。ヒーローたちは「お願(ねが)い…やめて。」'},
+      {easy:'A goblin walks in, looks at "PATY"\u2026 and walks right back out. 😶', story:'A goblin walked in, looked at "PATY"\u2026 and walked right back out. 😶', jp:'ゴブリンが入(はい)ってきて、「PATY」を見(み)て…そのまま出(で)て行(い)った。'},
+      {easy:'Elder Bimble: "We scared off an enemy! {Victory|ビクトリー / 勝利(しょうり)}!"', story:'Elder Bimble: "We scared off an enemy! {Victory|ビクトリー / 勝利(しょうり)}!"', jp:'ビンブル長老(ちょうろう)「敵(てき)を追(お)い払(はら)った！勝利(しょうり)だ！」'},
+      {easy:'The party is a big success! \u2026until 8pm. Little People sleep early. 😴', story:'The party was a big success! \u2026until 8pm. Little People sleep early. 😴', jp:'パーティーは大成功(だいせいこう)！…夜(よる)8時(じ)まで。コビトは寝(ね)るのが早(はや)い。'},
+    ]
+  }
+};
+
+(function(){
+  const $=id=>document.getElementById(id);
+  const book=$('book'),overlay=$('bk-overlay'),endPanel=$('bk-end');
+  const pageEl=$('book-page'),textEl=$('book-text'),counterEl=$('book-counter'),bar=$('bk-bar');
+  const jpBox=$('bk-jp-text'),jpBody=$('bk-jp-body'),glossEl=$('bk-gloss'),glossW=$('bk-gloss-w'),glossG=$('bk-gloss-g');
+  const prevBtn=$('bk-prev'),fwdBtn=$('bk-fwd'),jpBtn=$('bk-jp'),autoBtn=$('bk-auto'),fsBtn=$('bk-fs');
+  const readerTitle=$('reader-title'),ovTitle=$('ov-title'),ovSub=$('ov-sub'),ovEmoji=$('ov-emoji');
+  const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let cur=STORIES.prologue,idx=0,level='easy',jpOn=false,speed=1,auto=false,started=false;
+  let audio=null,autoTimer=null;
+  const N=()=>cur.beats.length;
+  const pad=n=>String(n+1).padStart(2,'0');
+
+  function stopAudio(){if(audio){audio.pause();audio.onended=null;audio=null;}clearTimeout(autoTimer);}
+  window.stopBookAudio=stopAudio;
+
+  function buildText(){textEl.innerHTML=cur.beats.map((b,i)=>`<span class="sentence" data-i="${i}">${renderEN(b[level])}</span>`).join(' ');}
+  function centerActive(){
+    const el=textEl.querySelector('.sentence.active');if(!el)return;
+    const cR=pageEl.getBoundingClientRect(),eR=el.getBoundingClientRect();
+    const target=pageEl.scrollTop+(eR.top-cR.top)-(pageEl.clientHeight-eR.height)/2;
+    pageEl.scrollTo({top:Math.max(0,target),behavior:reduceMotion?'auto':'smooth'});
+  }
+  function autoDelay(text){const words=text.replace(/\{([^|}]+)\|[^}]*\}/g,'$1').split(/\s+/).length;return Math.max(2600,words*430)/speed;}
+  function armAuto(text){clearTimeout(autoTimer);if(auto)autoTimer=setTimeout(()=>advance(),autoDelay(text));}
+  function playAudio(i){
+    stopAudio();
+    audio=new Audio(ASSET+'voice/'+cur.voiceId+'/'+level+'/'+cur.prefix+'_'+pad(i)+'.mp3');
+    audio.playbackRate=speed;
+    audio.onended=()=>{if(auto)advance();};
+    audio.onerror=()=>{audio=null;armAuto(cur.beats[i][level]);};
+    audio.play().catch(()=>{audio=null;armAuto(cur.beats[i][level]);});
+  }
+  function paint(){
+    textEl.querySelectorAll('.sentence').forEach((s,i)=>{s.classList.toggle('active',i===idx);s.classList.toggle('seen',i<idx);});
+    counterEl.textContent=(cur.prefix==='pro'?'PROLOGUE':'STORY')+' · '+(idx+1)+' / '+N();
+    bar.style.width=((idx+1)/N()*100)+'%';
+    jpBody.innerHTML=ruby(cur.beats[idx].jp);
+    jpBox.classList.toggle('show',jpOn);
+    glossEl.classList.remove('show');
+    prevBtn.classList.toggle('off',idx===0);
+    fwdBtn.classList.toggle('off',idx>=N()-1);
+  }
+  function setActive(i,play){idx=Math.max(0,Math.min(N()-1,i));paint();centerActive();if(started&&play!==false)playAudio(idx);}
+  function advance(){if(!started)return;if(idx>=N()-1){stopAudio();endPanel.classList.add('show');return;}setActive(idx+1);}
+  function back(){if(started&&idx>0)setActive(idx-1);}
+  function restart(){endPanel.classList.remove('show');overlay.classList.add('fade');started=true;buildText();setActive(0);pageEl.focus({preventScroll:true});}
+
+  function loadStory(key,autostart){
+    stopAudio();
+    cur=STORIES[key];idx=0;started=false;
+    ovEmoji.textContent=cur.emoji;
+    ovTitle.innerHTML=`${cur.titleEn}<br>${ruby(cur.titleJp)}`;
+    ovSub.innerHTML=`${cur.subEn}<br>${ruby(cur.subJp)}`;
+    readerTitle.innerHTML=`${cur.emoji} ${cur.titleEn}<span class="jp">${ruby(cur.titleJp)}</span>`;
+    overlay.classList.remove('fade');endPanel.classList.remove('show');
+    buildText();paint();
+    document.querySelectorAll('.side-card[data-story]').forEach(c=>c.classList.toggle('side-now',c.dataset.story===key));
+    if(autostart)restart();
+  }
+
+  /* page interactions */
+  pageEl.addEventListener('click',e=>{
+    if(!started)return;
+    const v=e.target.closest('.vocab');const s=e.target.closest('.sentence');const si=s?+s.dataset.i:-1;
+    if(v&&si===idx){e.stopPropagation();glossW.textContent=v.dataset.w;glossG.innerHTML=ruby(v.dataset.g);glossEl.classList.add('show');return;}
+    if(s&&si!==idx){glossEl.classList.remove('show');setActive(si);return;}
+    glossEl.classList.remove('show');advance();
+  });
+  pageEl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance();}});
+
+  prevBtn.addEventListener('click',e=>{e.stopPropagation();glossEl.classList.remove('show');back();});
+  fwdBtn.addEventListener('click',e=>{e.stopPropagation();glossEl.classList.remove('show');advance();});
+
+  $('bk-start').addEventListener('click',restart);
+  $('bk-restart').addEventListener('click',e=>{e.stopPropagation();restart();});
+  $('bk-replay').addEventListener('click',restart);
+  $('bk-more').addEventListener('click',()=>{
+    if(document.fullscreenElement===book)document.exitFullscreen().catch(()=>{});
+    theaterOff();document.getElementById('story-shelf').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'});
+  });
+
+  jpBtn.addEventListener('click',e=>{e.stopPropagation();jpOn=!jpOn;jpBtn.classList.toggle('on',jpOn);jpBtn.setAttribute('aria-pressed',String(jpOn));jpBox.classList.toggle('show',jpOn);});
+  autoBtn.addEventListener('click',e=>{
+    e.stopPropagation();auto=!auto;autoBtn.classList.toggle('on',auto);autoBtn.setAttribute('aria-pressed',String(auto));autoBtn.textContent=auto?'⏸ Auto':'▶ Auto';
+    if(auto&&started){if(audio&&!audio.ended){audio.onended=()=>{if(auto)advance();};}else armAuto(cur.beats[idx][level]);}else clearTimeout(autoTimer);
+  });
+  document.querySelectorAll('.book-speed button').forEach(b=>{
+    b.addEventListener('click',e=>{e.stopPropagation();speed=parseFloat(b.dataset.rate);document.querySelectorAll('.book-speed button').forEach(x=>x.classList.toggle('active',x===b));if(audio)audio.playbackRate=speed;});
+  });
+  document.querySelectorAll('#level-seg button').forEach(b=>{
+    b.addEventListener('click',()=>{level=b.dataset.level;document.querySelectorAll('#level-seg button').forEach(x=>x.classList.toggle('active',x===b));if(started){buildText();setActive(idx,false);playAudio(idx);}});
+  });
+
+  /* story shelf cards */
+  document.querySelectorAll('.side-card[data-story]').forEach(c=>{
+    const go=()=>{loadStory(c.dataset.story,true);book.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});};
+    c.addEventListener('click',go);
+    c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  });
+
+  /* fullscreen / theater */
+  function theaterOn(){book.classList.add('theater','big');document.body.classList.add('no-scroll');setTimeout(centerActive,60);}
+  function theaterOff(){book.classList.remove('theater','big');document.body.classList.remove('no-scroll');setTimeout(centerActive,60);}
+  function toggleFS(){
+    if(document.fullscreenElement===book)document.exitFullscreen().catch(()=>{});
+    else if(book.classList.contains('theater'))theaterOff();
+    else if(book.requestFullscreen)book.requestFullscreen().catch(theaterOn);
+    else theaterOn();
+  }
+  fsBtn.addEventListener('click',e=>{e.stopPropagation();toggleFS();});
+  document.addEventListener('fullscreenchange',()=>{const on=document.fullscreenElement===book||book.classList.contains('theater');book.classList.toggle('big',on);setTimeout(centerActive,60);});
+  document.addEventListener('keydown',e=>{
+    if(!started)return;
+    const fs=document.fullscreenElement===book||book.classList.contains('theater');
+    if(!fs&&!book.contains(document.activeElement))return;
+    if(e.key==='ArrowRight'){e.preventDefault();advance();}
+    else if(e.key==='ArrowLeft'){e.preventDefault();back();}
+    else if(e.key.toLowerCase()==='f'){e.preventDefault();toggleFS();}
+    else if(e.key==='Escape'&&book.classList.contains('theater'))theaterOff();
+  });
+
+  loadStory('prologue',false);
+})();
+
+/* ════════════ VOCAB LIST ════════════ */
+const VOCAB=[
+  ['mage','メイジ','魔法使(まほうつか)い'],['magic','マジック','魔法(まほう)'],['world','ワールド','世界(せかい)'],
+  ['hero','ヒーロー','英雄(えいゆう)'],['guardian','ガーディアン','守護者(しゅごしゃ)'],['crystal','クリスタル','水晶(すいしょう)'],
+  ['Advanced','アドバンスト','上級(じょうきゅう)の'],['crack','クラック','ひび・裂(さ)け目(め)'],['alone','アローン','ひとりで'],
+  ['anyway','エニウェイ','とにかく'],['signal','シグナル','信号(しんごう)'],['anchor','アンカー','錨(いかり)'],['reckless','レックレス','無謀(むぼう)な'],
+];
+(function(){
+  const g=document.getElementById('vocab-grid');
+  VOCAB.forEach(([en,kana,ja])=>{const d=document.createElement('div');d.className='vchip';d.innerHTML=`<div class="en">${en}</div><div class="kana">${kana}</div><div class="ja">${ja}</div>`;g.appendChild(d);});
+})();
+
+/* ════════════ Turn ALL 漢字(かな) into furigana (small, above) ════════════ */
+rubifyTree(document.querySelector('.page'));
+</script>
+</body>
+</html>
