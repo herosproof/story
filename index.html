@@ -144,6 +144,21 @@ ruby rt{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.52em;c
 .side-soon:hover{transform:none;box-shadow:0 4px 20px var(--shadow);}
 .side-now{outline:2px solid var(--gold-light);outline-offset:2px;}
 
+/* ════════════ PICTURE BOOK READER ════════════ */
+.pbook{position:relative;width:100%;background:linear-gradient(158deg,var(--paper) 0%,var(--paper-2) 100%);border:1px solid var(--paper-edge);border-radius:20px;box-shadow:0 10px 44px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.55);padding:14px 16px 18px;overflow:hidden;}
+.pbook::before{content:'';position:absolute;inset:0;pointer-events:none;border-radius:20px;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,255,255,.4),transparent 60%);}
+.pbook:fullscreen,.pbook.theater{border-radius:0;padding:24px;}
+.pbook.theater{position:fixed;inset:0;z-index:1000;width:100vw;height:100vh;display:flex;flex-direction:column;}
+.pbook.big .pbook-stage{flex:1;height:auto;}
+.pbook-stage{position:relative;z-index:2;height:clamp(320px,62vh,640px);display:flex;align-items:center;justify-content:center;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.14);cursor:pointer;}
+.pbook-img{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;}
+.pbook-cover-img{width:min(220px,62%);border-radius:12px;display:block;margin:0 auto;box-shadow:0 10px 30px rgba(0,0,0,.5);border:1px solid rgba(138,103,18,.3);}
+.pbook-pdf-link{display:inline-block;margin-top:4px;font-size:.82rem;color:var(--gold-deep2);text-decoration:underline;opacity:.85;}
+
+/* ════════════ SHELF COVER IMAGES ════════════ */
+.side-cover img{width:100%;height:100%;object-fit:cover;border-radius:10px;}
+.shelf-sub{text-align:center;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.92rem;color:var(--purple-light);line-height:1.75;margin:-8px 0 18px;}
+
 .npc-note{background:rgba(245,238,220,.06);border:1px dashed rgba(201,160,48,.35);border-radius:16px;padding:20px;margin-top:22px;text-align:center;transition:border-color .2s,background .2s;}
 .npc-note:hover{background:rgba(245,238,220,.1);border-color:rgba(201,160,48,.55);}
 .npc-note .em{font-size:1.8rem;letter-spacing:.2em;display:block;margin-bottom:9px;}
@@ -214,7 +229,7 @@ footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgb
 
     <h2 class="reader-title" id="reader-title"></h2>
 
-    <div class="level-row">
+    <div class="level-row" id="level-row">
       <span class="level-label">レベル:</span>
       <div class="level-seg" id="level-seg">
         <button class="active" data-level="easy">やさしい<small>Easy</small></button>
@@ -231,7 +246,10 @@ footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgb
           <span class="lab">🔊</span>
           <button data-rate="0.5">0.5×</button>
           <button data-rate="0.75">0.75×</button>
+          <button data-rate="0.9">0.9×</button>
           <button class="active" data-rate="1">1×</button>
+          <button data-rate="1.1">1.1×</button>
+          <button data-rate="1.25">1.25×</button>
         </span>
         <button class="pbtn" id="bk-fs">⛶</button>
         <button class="pbtn" id="bk-restart">↺</button>
@@ -267,15 +285,63 @@ footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgb
       </div>
     </div>
 
+    <!-- ════════════ PICTURE BOOK READER (image pages + optional narration) ════════════ -->
+    <div class="pbook" id="pbook" style="display:none">
+      <div class="book-top">
+        <span class="book-counter" id="pbk-counter"></span>
+        <button class="pbtn" id="pbk-narrate" title="Play narration / 読(よ)み上(あ)げ">🔊 Narrate</button>
+        <button class="pbtn" id="pbk-auto" title="Auto-advance / 自動再生">▶ Auto</button>
+        <span class="book-speed" aria-label="Narration speed">
+          <span class="lab">🔊</span>
+          <button data-rate="0.5">0.5×</button>
+          <button data-rate="0.75">0.75×</button>
+          <button data-rate="0.9">0.9×</button>
+          <button class="active" data-rate="1">1×</button>
+          <button data-rate="1.1">1.1×</button>
+          <button data-rate="1.25">1.25×</button>
+        </span>
+        <button class="pbtn" id="pbk-fs" title="Fullscreen / 全画面">⛶</button>
+        <button class="pbtn" id="pbk-restart" title="Restart / はじめから">↺</button>
+      </div>
+
+      <div class="book-progress"><i id="pbk-bar"></i></div>
+
+      <button class="book-nav book-prev off" id="pbk-prev" aria-label="Back / まえ">‹</button>
+      <button class="book-nav book-fwd off" id="pbk-fwd" aria-label="Next / つぎ">›</button>
+
+      <div class="pbook-stage" id="pbk-stage" role="button" tabindex="0" aria-label="Next page / つぎのページへ">
+        <img class="pbook-img" id="pbk-img" alt="">
+      </div>
+
+      <div class="book-end" id="pbk-end">
+        <div class="ov-emoji">💜</div>
+        <div class="ov-title">The End<br>おわり</div>
+        <p class="ov-sub" id="pbk-end-sub">Nice reading!<br>よく読(よ)めました！</p>
+        <div class="book-end-actions">
+          <button class="pbtn" id="pbk-replay">↺ Read again · もう一度</button>
+          <button class="pbtn on" id="pbk-more">📚 More stories · ほかのお話</button>
+        </div>
+      </div>
+
+      <div class="book-overlay" id="pbk-overlay">
+        <img class="pbook-cover-img" id="pbk-cover-img" alt="" style="display:none">
+        <div class="ov-emoji" id="pbk-ov-emoji" style="display:none">📖</div>
+        <div class="ov-title" id="pbk-ov-title"></div>
+        <p class="ov-sub" id="pbk-ov-sub"></p>
+        <a class="pbook-pdf-link" id="pbk-pdf-link" href="#" target="_blank" rel="noopener" style="display:none">📄 Also available as a PDF · PDF版もあります</a>
+        <button class="start-btn" id="pbk-start">▶ READ · よむ</button>
+      </div>
+    </div>
+
     <p class="reader-hint">
       Only the glowing sentence is in focus. Use the arrows (or tap) to read on. Tap a <b>gold word</b> for its meaning!<br>
       光っている文だけがはっきり見える。矢印(やじるし)かタップで次(つぎ)へ。<b>金色(きんいろ)の言葉(ことば)</b>で意味(いみ)が出(で)るよ！
     </p>
 
-    <h2 class="shelf-heading">✦ Stories<span class="jp">お話のたな</span></h2>
-    <div class="shelf" id="story-shelf">
+    <h2 class="shelf-heading">📖 Main Story<span class="jp">本編(ほんぺん)</span></h2>
+    <div class="shelf" id="story-shelf-main">
       <div class="side-card" data-story="prologue" role="button" tabindex="0">
-        <span class="side-cover">📖</span>
+        <span class="side-cover" id="cover-prologue">📖</span>
         <div class="side-body">
           <h4>The Day the World Cracked<span class="jp">世界(せかい)が割(わ)れた日(ひ)</span></h4>
           <p>The prologue — Lumi's story, before the game begins.<br>プロローグ。ゲームの前(まえ)の、ルミのお話(はなし)。</p>
@@ -283,8 +349,21 @@ footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgb
         </div>
       </div>
 
+      <div class="side-card side-soon">
+        <span class="side-cover">✏️</span>
+        <div class="side-body">
+          <h4>More chapters in the works<span class="jp">つづきは、せいさくちゅう</span></h4>
+          <p>The full main story is still being written! For now, explore the Gaiden tales below. 💜<br>本編(ほんぺん)はまだ製作中(せいさくちゅう)。下(した)の外伝(がいでん)もぜひ読(よ)んでね。</p>
+          <span class="side-pill">⚙ In progress · 製作中</span>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="shelf-heading">✨ Gaiden<span class="jp">外伝(がいでん)</span></h2>
+    <p class="shelf-sub">Side stories and picture books from around Lumi's world.<br>ルミの世界(せかい)の、いろいろな番外編(ばんがいへん)と絵本(えほん)。</p>
+    <div class="shelf" id="story-shelf-gaiden">
       <div class="side-card" data-story="littlepeople" role="button" tabindex="0">
-        <span class="side-cover">🥳</span>
+        <span class="side-cover" id="cover-littlepeople">🥳</span>
         <div class="side-body">
           <h4>The Little People's Big, BIG Party<span class="jp">コビトたちの おおきな おおきな パーティー</span></h4>
           <p>A silly side story about flavors, friends, and one very confused goblin. 🍬🍋🧂🌶️<br>味(あじ)と仲間(なかま)の、おバカで楽(たの)しいお話(はなし)。</p>
@@ -292,14 +371,23 @@ footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgb
         </div>
       </div>
 
-      <a class="side-card" href="assets/lumi-lights-the-way.pdf" target="_blank" rel="noopener">
-        <span class="side-cover">📖</span>
+      <div class="side-card" data-picbook="lumi-lights" role="button" tabindex="0">
+        <span class="side-cover" id="cover-lumi-lights">🎃</span>
         <div class="side-body">
           <h4>Lumi Lights the Way<span class="jp">ルミがてらすみち</span></h4>
           <p>Little Lumi's very first story — a bilingual picture book, made for Halloween! 🎃<br>小(ちい)さなルミの、はじめての絵本(えほん)。</p>
-          <span class="side-pill">🎃 Picture Book (PDF) · 絵本</span>
+          <span class="side-pill">🎃 Picture Book · 絵本</span>
         </div>
-      </a>
+      </div>
+
+      <div class="side-card" data-picbook="candy-cats" role="button" tabindex="0">
+        <span class="side-cover" id="cover-candy-cats">🍬</span>
+        <div class="side-body">
+          <h4>The Candy Cats of Candy Forest<span class="jp">キャンディーのもりのキャンディーキャットたち</span></h4>
+          <p>Sweet NPC friends from a forest of candy — a picture book made before Hero's Proof even began! 🍬🐱<br>あまいお菓子(かし)の森(もり)のなかまたちの絵本(えほん)。</p>
+          <span class="side-pill">🍬 Picture Book · 絵本</span>
+        </div>
+      </div>
 
       <div class="side-card side-soon">
         <span class="side-cover">✏️</span>
@@ -408,19 +496,30 @@ const panels={prologue:document.getElementById('panel-prologue'),notes:document.
 function showTab(name){
   tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   Object.entries(panels).forEach(([k,p])=>p.classList.toggle('active',k===name));
-  if(name!=='prologue')stopBookAudio();
+  if(name!=='prologue'){stopBookAudio();if(window.stopPicBookAudio)stopPicBookAudio();}
 }
 tabs.forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
 
-/* ════════════ STORYBOOK DATA ════════════
+/* ════════════ STORYBOOK DATA (text reader: Prologue, Little People) ════════════
    Everything lives in the STORY repo (served at /story/):
      assets/voice/prologue/easy/pro_01.mp3 … pro_25.mp3
      assets/voice/prologue/story/pro_01.mp3 …            (optional)
      assets/voice/littlepeople/easy/lp_01.mp3 … lp_24.mp3
      assets/voice/littlepeople/story/lp_01.mp3 …         (optional)
-     assets/lumi-lights-the-way.pdf
+     assets/covers/prologue.jpg                          (optional shelf cover)
+     assets/covers/littlepeople.jpg                      (optional shelf cover)
    Missing files fail silently. English narration only; JP is shared by both levels.
    (Character portraits now live in the separate CHARACTERS repo — see characters.html)
+
+   ════ PICTURE BOOK DATA (image-page readers: Lumi Lights the Way, Candy Cats) ════
+   See PICBOOKS below. Pages live at:
+     assets/lumi-lights/page (1).png … page (61).png      — page (1) doubles as the cover
+     assets/candy-cats/page (1).png … page (18).png       — page (1) doubles as the cover
+   Optional one-track narration per page (only on pages with text; illustration-only
+   pages just stay silent — missing files fail silently either way):
+     assets/voice/lumi-lights/page (1).mp3 … page (61).mp3
+     assets/voice/candy-cats/page (1).mp3 … page (18).mp3
+   Narration speed is adjustable (0.5×–1.25×) rather than recorded twice.
 */
 const ASSET='assets/';
 const STORIES={
@@ -489,6 +588,39 @@ const STORIES={
   }
 };
 
+/* ════════════ PICTURE BOOKS ════════════
+   See comment block above for the asset layout. page(1) doubles as the cover image.
+*/
+const PICBOOKS={
+  'lumi-lights':{
+    folder:'lumi-lights',pageCount:61,emoji:'🎃',
+    titleEn:'Lumi Lights the Way',titleJp:'ルミがてらすみち',
+    subEn:"Little Lumi's very first story — made for Halloween! 🎃",
+    subJp:'小(ちい)さなルミの、はじめての絵本(えほん)。',
+    pdf:'lumi-lights-the-way.pdf',
+  },
+  'candy-cats':{
+    folder:'candy-cats',pageCount:18,emoji:'🍬',
+    titleEn:'The Candy Cats of Candy Forest',titleJp:'キャンディーのもりのキャンディーキャットたち',
+    subEn:'Sweet NPC friends from a forest of candy! 🍬🐱',
+    subJp:'あまいお菓子(かし)の森(もり)のなかまたちの絵本(えほん)。',
+    pdf:null,
+  }
+};
+
+/* ── shelf cover images: preload, swap in on success, leave emoji fallback on failure ── */
+function setCoverImg(elId,src){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  const probe=new Image();
+  probe.onload=()=>{const img=document.createElement('img');img.src=src;img.alt='';el.textContent='';el.appendChild(img);};
+  probe.src=src;
+}
+setCoverImg('cover-prologue',ASSET+'covers/prologue.jpg');
+setCoverImg('cover-littlepeople',ASSET+'covers/littlepeople.jpg');
+setCoverImg('cover-lumi-lights',ASSET+'lumi-lights/page (1).png');
+setCoverImg('cover-candy-cats',ASSET+'candy-cats/page (1).png');
+
 (function(){
   const $=id=>document.getElementById(id);
   const book=$('book'),overlay=$('bk-overlay'),endPanel=$('bk-end');
@@ -539,6 +671,9 @@ const STORIES={
   function restart(){endPanel.classList.remove('show');overlay.classList.add('fade');started=true;buildText();setActive(0);pageEl.focus({preventScroll:true});}
 
   function loadStory(key,autostart){
+    if(window.stopPicBookAudio)stopPicBookAudio();
+    book.style.display='';document.getElementById('pbook').style.display='none';
+    document.getElementById('level-row').style.display='';
     stopAudio();
     cur=STORIES[key];idx=0;started=false;
     ovEmoji.textContent=cur.emoji;
@@ -548,8 +683,10 @@ const STORIES={
     overlay.classList.remove('fade');endPanel.classList.remove('show');
     buildText();paint();
     document.querySelectorAll('.side-card[data-story]').forEach(c=>c.classList.toggle('side-now',c.dataset.story===key));
+    document.querySelectorAll('.side-card[data-picbook]').forEach(c=>c.classList.remove('side-now'));
     if(autostart)restart();
   }
+  window.loadStory=loadStory;
 
   /* page interactions */
   pageEl.addEventListener('click',e=>{
@@ -569,7 +706,7 @@ const STORIES={
   $('bk-replay').addEventListener('click',restart);
   $('bk-more').addEventListener('click',()=>{
     if(document.fullscreenElement===book)document.exitFullscreen().catch(()=>{});
-    theaterOff();document.getElementById('story-shelf').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'});
+    theaterOff();document.getElementById('story-shelf-main').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'});
   });
 
   jpBtn.addEventListener('click',e=>{e.stopPropagation();jpOn=!jpOn;jpBtn.classList.toggle('on',jpOn);jpBtn.setAttribute('aria-pressed',String(jpOn));jpBox.classList.toggle('show',jpOn);});
@@ -577,14 +714,14 @@ const STORIES={
     e.stopPropagation();auto=!auto;autoBtn.classList.toggle('on',auto);autoBtn.setAttribute('aria-pressed',String(auto));autoBtn.textContent=auto?'⏸ Auto':'▶ Auto';
     if(auto&&started){if(audio&&!audio.ended){audio.onended=()=>{if(auto)advance();};}else armAuto(cur.beats[idx][level]);}else clearTimeout(autoTimer);
   });
-  document.querySelectorAll('.book-speed button').forEach(b=>{
-    b.addEventListener('click',e=>{e.stopPropagation();speed=parseFloat(b.dataset.rate);document.querySelectorAll('.book-speed button').forEach(x=>x.classList.toggle('active',x===b));if(audio)audio.playbackRate=speed;});
+  book.querySelectorAll('.book-speed button').forEach(b=>{
+    b.addEventListener('click',e=>{e.stopPropagation();speed=parseFloat(b.dataset.rate);book.querySelectorAll('.book-speed button').forEach(x=>x.classList.toggle('active',x===b));if(audio)audio.playbackRate=speed;});
   });
   document.querySelectorAll('#level-seg button').forEach(b=>{
     b.addEventListener('click',()=>{level=b.dataset.level;document.querySelectorAll('#level-seg button').forEach(x=>x.classList.toggle('active',x===b));if(started){buildText();setActive(idx,false);playAudio(idx);}});
   });
 
-  /* story shelf cards */
+  /* story shelf cards (text reader) */
   document.querySelectorAll('.side-card[data-story]').forEach(c=>{
     const go=()=>{loadStory(c.dataset.story,true);book.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});};
     c.addEventListener('click',go);
@@ -603,7 +740,7 @@ const STORIES={
   fsBtn.addEventListener('click',e=>{e.stopPropagation();toggleFS();});
   document.addEventListener('fullscreenchange',()=>{const on=document.fullscreenElement===book||book.classList.contains('theater');book.classList.toggle('big',on);setTimeout(centerActive,60);});
   document.addEventListener('keydown',e=>{
-    if(!started)return;
+    if(!started||book.style.display==='none')return;
     const fs=document.fullscreenElement===book||book.classList.contains('theater');
     if(!fs&&!book.contains(document.activeElement))return;
     if(e.key==='ArrowRight'){e.preventDefault();advance();}
@@ -613,6 +750,126 @@ const STORIES={
   });
 
   loadStory('prologue',false);
+})();
+
+/* ════════════ PICTURE BOOK ENGINE (image pages + optional one-track narration) ════════════ */
+(function(){
+  const $=id=>document.getElementById(id);
+  const pbookEl=$('pbook'),overlay=$('pbk-overlay'),endPanel=$('pbk-end');
+  const stage=$('pbk-stage'),img=$('pbk-img'),counterEl=$('pbk-counter'),bar=$('pbk-bar');
+  const prevBtn=$('pbk-prev'),fwdBtn=$('pbk-fwd'),narrateBtn=$('pbk-narrate'),autoBtn=$('pbk-auto'),fsBtn=$('pbk-fs');
+  const coverImg=$('pbk-cover-img'),ovEmoji=$('pbk-ov-emoji'),ovTitle=$('pbk-ov-title'),ovSub=$('pbk-ov-sub'),pdfLink=$('pbk-pdf-link');
+  const readerTitle=$('reader-title');
+  const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const FALLBACK_MS=3200; /* pause length on pages with no recorded narration, when Auto is on */
+
+  let cur=null,pageIdx=0,speed=1,auto=false,started=false;
+  let audio=null,autoTimer=null;
+
+  function pagePath(i){return ASSET+cur.folder+'/page ('+(i+1)+').png';}
+  function voicePath(i){return ASSET+'voice/'+cur.folder+'/page ('+(i+1)+').mp3';}
+  function stopAudio(){if(audio){audio.pause();audio.onended=null;audio=null;}clearTimeout(autoTimer);}
+  window.stopPicBookAudio=stopAudio;
+
+  function armAuto(ms){clearTimeout(autoTimer);if(auto)autoTimer=setTimeout(()=>advance(),ms/speed);}
+  function playNarration(i){
+    stopAudio();
+    audio=new Audio(voicePath(i));
+    audio.playbackRate=speed;
+    audio.onended=()=>{if(auto)advance();};
+    audio.onerror=()=>{audio=null;if(auto)armAuto(FALLBACK_MS);};
+    audio.play().catch(()=>{audio=null;if(auto)armAuto(FALLBACK_MS);});
+  }
+  function showPage(i,autoplay){
+    pageIdx=Math.max(0,Math.min(cur.pageCount-1,i));
+    img.src=pagePath(pageIdx);img.alt='Page '+(pageIdx+1);
+    counterEl.textContent='PAGE · '+(pageIdx+1)+' / '+cur.pageCount;
+    bar.style.width=((pageIdx+1)/cur.pageCount*100)+'%';
+    prevBtn.classList.toggle('off',pageIdx===0);
+    fwdBtn.classList.toggle('off',pageIdx>=cur.pageCount-1);
+    if(started&&autoplay!==false)playNarration(pageIdx);
+  }
+  function advance(){if(!started)return;if(pageIdx>=cur.pageCount-1){stopAudio();endPanel.classList.add('show');return;}showPage(pageIdx+1);}
+  function back(){if(started&&pageIdx>0)showPage(pageIdx-1);}
+  function restart(){endPanel.classList.remove('show');overlay.classList.add('fade');started=true;showPage(0);stage.focus({preventScroll:true});}
+
+  function setOverlayCover(src,emoji){
+    const probe=new Image();
+    probe.onload=()=>{coverImg.src=src;coverImg.style.display='';ovEmoji.style.display='none';};
+    probe.onerror=()=>{coverImg.style.display='none';ovEmoji.style.display='';ovEmoji.textContent=emoji;};
+    probe.src=src;
+  }
+
+  function loadPicBook(key,autostart){
+    stopAudio();if(window.stopBookAudio)stopBookAudio();
+    document.getElementById('book').style.display='none';pbookEl.style.display='';
+    document.getElementById('level-row').style.display='none';
+    cur=PICBOOKS[key];pageIdx=0;started=false;
+    setOverlayCover(pagePath(0),cur.emoji);
+    ovTitle.innerHTML=`${cur.titleEn}<br>${ruby(cur.titleJp)}`;
+    ovSub.innerHTML=`${cur.subEn}<br>${ruby(cur.subJp)}`;
+    readerTitle.innerHTML=`${cur.emoji} ${cur.titleEn}<span class="jp">${ruby(cur.titleJp)}</span>`;
+    if(cur.pdf){pdfLink.href=ASSET+cur.pdf;pdfLink.style.display='';}else{pdfLink.style.display='none';}
+    overlay.classList.remove('fade');endPanel.classList.remove('show');
+    showPage(0,false);
+    document.querySelectorAll('.side-card[data-story]').forEach(c=>c.classList.remove('side-now'));
+    document.querySelectorAll('.side-card[data-picbook]').forEach(c=>c.classList.toggle('side-now',c.dataset.picbook===key));
+    if(autostart)restart();
+  }
+  window.loadPicBook=loadPicBook;
+
+  /* page interactions */
+  stage.addEventListener('click',()=>{if(!started)return;advance();});
+  stage.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance();}});
+
+  prevBtn.addEventListener('click',e=>{e.stopPropagation();back();});
+  fwdBtn.addEventListener('click',e=>{e.stopPropagation();advance();});
+
+  $('pbk-start').addEventListener('click',restart);
+  $('pbk-restart').addEventListener('click',e=>{e.stopPropagation();restart();});
+  $('pbk-replay').addEventListener('click',restart);
+  $('pbk-more').addEventListener('click',()=>{
+    if(document.fullscreenElement===pbookEl)document.exitFullscreen().catch(()=>{});
+    theaterOff();document.getElementById('story-shelf-gaiden').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'});
+  });
+
+  narrateBtn.addEventListener('click',e=>{e.stopPropagation();if(started)playNarration(pageIdx);});
+  autoBtn.addEventListener('click',e=>{
+    e.stopPropagation();auto=!auto;autoBtn.classList.toggle('on',auto);autoBtn.textContent=auto?'⏸ Auto':'▶ Auto';
+    if(auto&&started){if(!audio||audio.ended)playNarration(pageIdx);else audio.onended=()=>{if(auto)advance();};}
+    else clearTimeout(autoTimer);
+  });
+  pbookEl.querySelectorAll('.book-speed button').forEach(b=>{
+    b.addEventListener('click',e=>{e.stopPropagation();speed=parseFloat(b.dataset.rate);pbookEl.querySelectorAll('.book-speed button').forEach(x=>x.classList.toggle('active',x===b));if(audio)audio.playbackRate=speed;});
+  });
+
+  /* picture-book shelf cards */
+  document.querySelectorAll('.side-card[data-picbook]').forEach(c=>{
+    const go=()=>{loadPicBook(c.dataset.picbook,true);pbookEl.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});};
+    c.addEventListener('click',go);
+    c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  });
+
+  /* fullscreen / theater */
+  function theaterOn(){pbookEl.classList.add('theater','big');document.body.classList.add('no-scroll');}
+  function theaterOff(){pbookEl.classList.remove('theater','big');document.body.classList.remove('no-scroll');}
+  function toggleFS(){
+    if(document.fullscreenElement===pbookEl)document.exitFullscreen().catch(()=>{});
+    else if(pbookEl.classList.contains('theater'))theaterOff();
+    else if(pbookEl.requestFullscreen)pbookEl.requestFullscreen().catch(theaterOn);
+    else theaterOn();
+  }
+  fsBtn.addEventListener('click',e=>{e.stopPropagation();toggleFS();});
+  document.addEventListener('fullscreenchange',()=>{const on=document.fullscreenElement===pbookEl||pbookEl.classList.contains('theater');pbookEl.classList.toggle('big',on);});
+  document.addEventListener('keydown',e=>{
+    if(!started||pbookEl.style.display==='none')return;
+    const fs=document.fullscreenElement===pbookEl||pbookEl.classList.contains('theater');
+    if(!fs&&!pbookEl.contains(document.activeElement))return;
+    if(e.key==='ArrowRight'){e.preventDefault();advance();}
+    else if(e.key==='ArrowLeft'){e.preventDefault();back();}
+    else if(e.key.toLowerCase()==='f'){e.preventDefault();toggleFS();}
+    else if(e.key==='Escape'&&pbookEl.classList.contains('theater'))theaterOff();
+  });
 })();
 
 /* ════════════ VOCAB LIST ════════════ */
