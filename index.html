@@ -152,6 +152,10 @@ ruby rt{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.52em;c
 .pbook.big .pbook-stage{flex:1;height:auto;}
 .pbook-stage{position:relative;z-index:2;height:clamp(320px,62vh,640px);display:flex;align-items:center;justify-content:center;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.14);cursor:pointer;}
 .pbook-img{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;}
+/* ── spread slots ── */
+.pbk-slot{flex:1;display:flex;align-items:center;justify-content:center;height:100%;overflow:hidden;}
+.pbk-slot.hidden{display:none!important;}
+.pbk-spine{flex:0 0 1px;height:80%;background:rgba(138,103,18,.28);align-self:center;pointer-events:none;}
 .pbook-cover-img{width:min(220px,62%);border-radius:12px;display:block;margin:0 auto;box-shadow:0 10px 30px rgba(0,0,0,.5);border:1px solid rgba(138,103,18,.3);}
 .pbook-pdf-link{display:inline-block;margin-top:4px;font-size:.82rem;color:var(--gold-deep2);text-decoration:underline;opacity:.85;}
 
@@ -291,6 +295,7 @@ footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgb
         <span class="book-counter" id="pbk-counter"></span>
         <button class="pbtn" id="pbk-narrate" title="Play narration / 読(よ)み上(あ)げ">🔊 Narrate</button>
         <button class="pbtn" id="pbk-auto" title="Auto-advance / 自動再生">▶ Auto</button>
+        <button class="pbtn" id="pbk-view" title="Spread view / 見開き表示">📖 Spread</button>
         <span class="book-speed" aria-label="Narration speed">
           <span class="lab">🔊</span>
           <button data-rate="0.5">0.5×</button>
@@ -310,7 +315,9 @@ footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgb
       <button class="book-nav book-fwd off" id="pbk-fwd" aria-label="Next / つぎ">›</button>
 
       <div class="pbook-stage" id="pbk-stage" role="button" tabindex="0" aria-label="Next page / つぎのページへ">
-        <img class="pbook-img" id="pbk-img" alt="">
+        <div class="pbk-slot hidden" id="pbk-left"><img class="pbook-img" id="pbk-img-left" alt=""></div>
+        <div class="pbk-spine" id="pbk-spine" style="display:none"></div>
+        <div class="pbk-slot" id="pbk-right"><img class="pbook-img" id="pbk-img-right" alt=""></div>
       </div>
 
       <div class="book-end" id="pbk-end">
@@ -593,14 +600,18 @@ const STORIES={
 */
 const PICBOOKS={
   'lumi-lights':{
-    folder:'lumi-lights',pageCount:61,emoji:'🎃',
+    folder:'lumi-lights',pageCount:61,
+    pairFlip:false, /* left slot=even(text), right slot=odd(illustration) */
+    emoji:'🎃',
     titleEn:'Lumi Lights the Way',titleJp:'ルミがてらすみち',
     subEn:"Little Lumi's very first story — made for Halloween! 🎃",
     subJp:'小(ちい)さなルミの、はじめての絵本(えほん)。',
     pdf:'lumi-lights-the-way.pdf',
   },
   'candy-cats':{
-    folder:'candy-cats',pageCount:18,emoji:'🍬',
+    folder:'candy-cats',pageCount:18,
+    pairFlip:true, /* left slot=odd(text), right slot=even(illustration) — matches current filenames */
+    emoji:'🍬',
     titleEn:'The Candy Cats of Candy Forest',titleJp:'キャンディーのもりのキャンディーキャットたち',
     subEn:'Sweet NPC friends from a forest of candy! 🍬🐱',
     subJp:'あまいお菓子(かし)の森(もり)のなかまたちの絵本(えほん)。',
@@ -756,42 +767,117 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
 (function(){
   const $=id=>document.getElementById(id);
   const pbookEl=$('pbook'),overlay=$('pbk-overlay'),endPanel=$('pbk-end');
-  const stage=$('pbk-stage'),img=$('pbk-img'),counterEl=$('pbk-counter'),bar=$('pbk-bar');
-  const prevBtn=$('pbk-prev'),fwdBtn=$('pbk-fwd'),narrateBtn=$('pbk-narrate'),autoBtn=$('pbk-auto'),fsBtn=$('pbk-fs');
+  const stage=$('pbk-stage');
+  const leftSlot=$('pbk-left'),rightSlot=$('pbk-right'),spineEl=$('pbk-spine');
+  const leftImg=$('pbk-img-left'),rightImg=$('pbk-img-right');
+  const counterEl=$('pbk-counter'),bar=$('pbk-bar');
+  const prevBtn=$('pbk-prev'),fwdBtn=$('pbk-fwd'),narrateBtn=$('pbk-narrate'),autoBtn=$('pbk-auto'),viewBtn=$('pbk-view'),fsBtn=$('pbk-fs');
   const coverImg=$('pbk-cover-img'),ovEmoji=$('pbk-ov-emoji'),ovTitle=$('pbk-ov-title'),ovSub=$('pbk-ov-sub'),pdfLink=$('pbk-pdf-link');
   const readerTitle=$('reader-title');
   const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const FALLBACK_MS=3200; /* pause length on pages with no recorded narration, when Auto is on */
 
-  let cur=null,pageIdx=0,speed=1,auto=false,started=false;
+  /* spreadMode: true=2 pages side-by-side; false=1 page full-width. Defaults to spread on
+     wide screens (≥700px) and single on phones. Toggle button switches at any time. */
+  let spreadMode=(window.innerWidth>=700);
+  let cur=null,spreadIdx=0,singlePageIdx=1,speed=1,auto=false,started=false;
   let audio=null,autoTimer=null;
 
   function pagePath(i){return ASSET+cur.folder+'/'+encodeURIComponent('page  ('+(i+1)+').JPG');}
-  function voicePath(i){return ASSET+'voice/'+cur.folder+'/'+encodeURIComponent('page  ('+(i+1)+').mp3');}
+  function voicePath(s){const n=String(s).padStart(2,'0');return ASSET+'voice/'+cur.folder+'/spread_'+n+'.mp3';}
+  /* ── AUDIO NAMING: record one file per text+illustration spread, numbered from 01.
+       assets/voice/lumi-lights/spread_01.mp3 … spread_30.mp3
+       assets/voice/candy-cats/spread_01.mp3  … spread_08.mp3
+     Spread 0 is always the cover — no audio needed. Missing files auto-advance. ── */
   function stopAudio(){if(audio){audio.pause();audio.onended=null;audio=null;}clearTimeout(autoTimer);}
   window.stopPicBookAudio=stopAudio;
 
+  /* ── spread helpers ── */
+  function totalSpreads(){return 1+Math.ceil((cur.pageCount-1)/2);}
+  /* Returns 1-based page numbers {left, right} for a spread index.
+     Spread 0 = cover alone (left:null, right:1).
+     pairFlip:false → left=even(text), right=odd(illustration) — Lumi Lights the Way
+     pairFlip:true  → left=odd(text),  right=even(illustration) — Candy Cats (current filenames) */
+  function getPagesForSpread(s){
+    if(s===0)return{left:null,right:1};
+    const k=s;
+    let lp=2*k, rp=2*k+1;
+    if(cur.pairFlip){lp=2*k+1; rp=2*k;}
+    if(lp>cur.pageCount)lp=null;
+    if(rp>cur.pageCount)rp=null;
+    return{left:lp,right:rp};
+  }
+  /* Is single-page index p a text (narrated) page? Cover (p=1) is illustration. */
+  function isTextPage(p){return p>1&&(cur.pairFlip?p%2===1:p%2===0);}
+  /* Which spread does single-page index p belong to? (used to pick the right audio file) */
+  function pageToSpread(p){return p===1?0:Math.ceil(p/(2));}
+  function setSlot(slot,imgEl,pageNum){
+    if(!pageNum){slot.classList.add('hidden');return;}
+    slot.classList.remove('hidden');
+    imgEl.src=pagePath(pageNum-1);imgEl.alt='Page '+pageNum;
+  }
+
   function armAuto(ms){clearTimeout(autoTimer);if(auto)autoTimer=setTimeout(()=>advance(),ms/speed);}
-  function playNarration(i){
+  /* s = spread index. 0 = cover (no audio, just arm timer if auto). 1+ = play spread_NN.mp3 */
+  function playNarration(s){
+    if(!s){if(auto)armAuto(FALLBACK_MS);return;}
     stopAudio();
-    audio=new Audio(voicePath(i));
+    audio=new Audio(voicePath(s));
     audio.playbackRate=speed;
     audio.onended=()=>{if(auto)advance();};
     audio.onerror=()=>{audio=null;if(auto)armAuto(FALLBACK_MS);};
     audio.play().catch(()=>{audio=null;if(auto)armAuto(FALLBACK_MS);});
   }
-  function showPage(i,autoplay){
-    pageIdx=Math.max(0,Math.min(cur.pageCount-1,i));
-    img.src=pagePath(pageIdx);img.alt='Page '+(pageIdx+1);
-    counterEl.textContent='PAGE · '+(pageIdx+1)+' / '+cur.pageCount;
-    bar.style.width=((pageIdx+1)/cur.pageCount*100)+'%';
-    prevBtn.classList.toggle('off',pageIdx===0);
-    fwdBtn.classList.toggle('off',pageIdx>=cur.pageCount-1);
-    if(started&&autoplay!==false)playNarration(pageIdx);
+
+  function showPage(s,autoplay){
+    spreadIdx=Math.max(0,Math.min(totalSpreads()-1,s));
+    const{left,right}=getPagesForSpread(spreadIdx);
+    const isCover=(spreadIdx===0);
+    setSlot(leftSlot,leftImg,left);
+    setSlot(rightSlot,rightImg,right);
+    spineEl.style.display=(left&&right)?'':'none';
+    const nums=[left,right].filter(Boolean);
+    counterEl.textContent=isCover?'COVER · 1':'PAGES '+nums.join('-')+' / '+cur.pageCount;
+    bar.style.width=((spreadIdx+1)/totalSpreads()*100)+'%';
+    prevBtn.classList.toggle('off',spreadIdx===0);
+    fwdBtn.classList.toggle('off',spreadIdx>=totalSpreads()-1);
+    if(started&&autoplay!==false)playNarration(spreadIdx); /* 0=cover(silent), 1+=spread_NN.mp3 */
   }
-  function advance(){if(!started)return;if(pageIdx>=cur.pageCount-1){stopAudio();endPanel.classList.add('show');return;}showPage(pageIdx+1);}
-  function back(){if(started&&pageIdx>0)showPage(pageIdx-1);}
-  function restart(){endPanel.classList.remove('show');overlay.classList.add('fade');started=true;showPage(0);stage.focus({preventScroll:true});}
+  /* ── single page mode: one page full-width, advance page-by-page ── */
+  function showSinglePage(p,autoplay){
+    singlePageIdx=Math.max(1,Math.min(cur.pageCount,p));
+    leftSlot.classList.add('hidden');spineEl.style.display='none';
+    rightSlot.classList.remove('hidden');
+    rightImg.src=pagePath(singlePageIdx-1);rightImg.alt='Page '+singlePageIdx;
+    counterEl.textContent=(singlePageIdx===1?'COVER':'PAGE '+singlePageIdx)+' / '+cur.pageCount;
+    bar.style.width=(singlePageIdx/cur.pageCount*100)+'%';
+    prevBtn.classList.toggle('off',singlePageIdx===1);
+    fwdBtn.classList.toggle('off',singlePageIdx>=cur.pageCount);
+    /* narrate only text pages; illustrations and cover use fallback timer */
+    const s=isTextPage(singlePageIdx)?pageToSpread(singlePageIdx):0;
+    if(started&&autoplay!==false)playNarration(s);
+  }
+
+  function advance(){
+    if(!started)return;
+    if(spreadMode){
+      if(spreadIdx>=totalSpreads()-1){stopAudio();endPanel.classList.add('show');return;}
+      showPage(spreadIdx+1);
+    } else {
+      if(singlePageIdx>=cur.pageCount){stopAudio();endPanel.classList.add('show');return;}
+      showSinglePage(singlePageIdx+1);
+    }
+  }
+  function back(){
+    if(!started)return;
+    if(spreadMode){if(spreadIdx>0)showPage(spreadIdx-1);}
+    else{if(singlePageIdx>1)showSinglePage(singlePageIdx-1);}
+  }
+  function restart(){
+    endPanel.classList.remove('show');overlay.classList.add('fade');started=true;
+    if(spreadMode)showPage(0);else showSinglePage(1);
+    stage.focus({preventScroll:true});
+  }
 
   function setOverlayCover(src,emoji){
     const probe=new Image();
@@ -804,14 +890,14 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
     stopAudio();if(window.stopBookAudio)stopBookAudio();
     document.getElementById('book').style.display='none';pbookEl.style.display='';
     document.getElementById('level-row').style.display='none';
-    cur=PICBOOKS[key];pageIdx=0;started=false;
+    cur=PICBOOKS[key];spreadIdx=0;singlePageIdx=1;started=false;
     setOverlayCover(pagePath(0),cur.emoji);
     ovTitle.innerHTML=`${cur.titleEn}<br>${ruby(cur.titleJp)}`;
     ovSub.innerHTML=`${cur.subEn}<br>${ruby(cur.subJp)}`;
     readerTitle.innerHTML=`${cur.emoji} ${cur.titleEn}<span class="jp">${ruby(cur.titleJp)}</span>`;
     if(cur.pdf){pdfLink.href=ASSET+cur.pdf;pdfLink.style.display='';}else{pdfLink.style.display='none';}
     overlay.classList.remove('fade');endPanel.classList.remove('show');
-    showPage(0,false);
+    if(spreadMode)showPage(0,false);else showSinglePage(1,false);
     document.querySelectorAll('.side-card[data-story]').forEach(c=>c.classList.remove('side-now'));
     document.querySelectorAll('.side-card[data-picbook]').forEach(c=>c.classList.toggle('side-now',c.dataset.picbook===key));
     if(autostart)restart();
@@ -833,11 +919,23 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
     theaterOff();document.getElementById('story-shelf-gaiden').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'});
   });
 
-  narrateBtn.addEventListener('click',e=>{e.stopPropagation();if(started)playNarration(pageIdx);});
+  narrateBtn.addEventListener('click',e=>{
+    e.stopPropagation();if(!started)return;
+    const s=spreadMode?spreadIdx:isTextPage(singlePageIdx)?pageToSpread(singlePageIdx):0;
+    playNarration(s);
+  });
   autoBtn.addEventListener('click',e=>{
     e.stopPropagation();auto=!auto;autoBtn.classList.toggle('on',auto);autoBtn.textContent=auto?'⏸ Auto':'▶ Auto';
-    if(auto&&started){if(!audio||audio.ended)playNarration(pageIdx);else audio.onended=()=>{if(auto)advance();};}
-    else clearTimeout(autoTimer);
+    if(auto&&started){
+      const s=spreadMode?spreadIdx:isTextPage(singlePageIdx)?pageToSpread(singlePageIdx):0;
+      if(!audio||audio.ended)playNarration(s);else audio.onended=()=>{if(auto)advance();};
+    } else clearTimeout(autoTimer);
+  });
+  viewBtn.addEventListener('click',e=>{
+    e.stopPropagation();spreadMode=!spreadMode;
+    viewBtn.textContent=spreadMode?'📄 Single':'📖 Spread';
+    viewBtn.title=spreadMode?'Single page view / 1ページ表示':'Spread view / 見開き表示';
+    if(started){if(spreadMode)showPage(spreadIdx,false);else showSinglePage(singlePageIdx,false);}
   });
   pbookEl.querySelectorAll('.book-speed button').forEach(b=>{
     b.addEventListener('click',e=>{e.stopPropagation();speed=parseFloat(b.dataset.rate);pbookEl.querySelectorAll('.book-speed button').forEach(x=>x.classList.toggle('active',x===b));if(audio)audio.playbackRate=speed;});
@@ -870,6 +968,9 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
     else if(e.key.toLowerCase()==='f'){e.preventDefault();toggleFS();}
     else if(e.key==='Escape'&&pbookEl.classList.contains('theater'))theaterOff();
   });
+  /* set initial toggle label to match the responsive default */
+  viewBtn.textContent=spreadMode?'📄 Single':'📖 Spread';
+  viewBtn.title=spreadMode?'Single page view / 1ページ表示':'Spread view / 見開き表示';
 })();
 
 /* ════════════ VOCAB LIST ════════════ */
