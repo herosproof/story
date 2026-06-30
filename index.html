@@ -513,8 +513,8 @@ tabs.forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
 
    ════ PICTURE BOOK DATA (image-page readers: Lumi Lights the Way, Candy Cats) ════
    See PICBOOKS below. Pages live at:
-     assets/lumi-lights/page (1).png … page (61).png      — page (1) doubles as the cover
-     assets/candy-cats/page (1).png … page (18).png       — page (1) doubles as the cover
+     assets/lumi-lights/page (1).JPG … page (61).JPG      — page (1) doubles as the cover
+     assets/candy-cats/page (1).JPG … page (18).JPG       — page (1) doubles as the cover
    Optional one-track narration per page (only on pages with text; illustration-only
    pages just stay silent — missing files fail silently either way):
      assets/voice/lumi-lights/page (1).mp3 … page (61).mp3
@@ -618,8 +618,8 @@ function setCoverImg(elId,src){
 }
 setCoverImg('cover-prologue',ASSET+'covers/prologue.jpg');
 setCoverImg('cover-littlepeople',ASSET+'covers/littlepeople.jpg');
-setCoverImg('cover-lumi-lights',ASSET+'lumi-lights/page (1).png');
-setCoverImg('cover-candy-cats',ASSET+'candy-cats/page (1).png');
+setCoverImg('cover-lumi-lights',ASSET+'lumi-lights/page (1).JPG');
+setCoverImg('cover-candy-cats',ASSET+'candy-cats/page (1).JPG');
 
 (function(){
   const $=id=>document.getElementById(id);
@@ -766,7 +766,7 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/page (1).png');
   let cur=null,pageIdx=0,speed=1,auto=false,started=false;
   let audio=null,autoTimer=null;
 
-  function pagePath(i){return ASSET+cur.folder+'/page ('+(i+1)+').png';}
+  function pagePath(i){return ASSET+cur.folder+'/page ('+(i+1)+').JPG';}
   function voicePath(i){return ASSET+'voice/'+cur.folder+'/page ('+(i+1)+').mp3';}
   function stopAudio(){if(audio){audio.pause();audio.onended=null;audio=null;}clearTimeout(autoTimer);}
   window.stopPicBookAudio=stopAudio;
