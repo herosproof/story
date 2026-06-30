@@ -618,8 +618,8 @@ function setCoverImg(elId,src){
 }
 setCoverImg('cover-prologue',ASSET+'covers/prologue.jpg');
 setCoverImg('cover-littlepeople',ASSET+'covers/littlepeople.jpg');
-setCoverImg('cover-lumi-lights',ASSET+'lumi-lights/'+encodeURIComponent('page (1).JPG'));
-setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page (1).JPG'));
+setCoverImg('cover-lumi-lights',ASSET+'lumi-lights/'+encodeURIComponent('page  (1).JPG'));
+setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1).JPG'));
 
 (function(){
   const $=id=>document.getElementById(id);
@@ -766,8 +766,8 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page (1).
   let cur=null,pageIdx=0,speed=1,auto=false,started=false;
   let audio=null,autoTimer=null;
 
-  function pagePath(i){return ASSET+cur.folder+'/'+encodeURIComponent('page ('+(i+1)+').JPG');}
-  function voicePath(i){return ASSET+'voice/'+cur.folder+'/'+encodeURIComponent('page ('+(i+1)+').mp3');}
+  function pagePath(i){return ASSET+cur.folder+'/'+encodeURIComponent('page  ('+(i+1)+').JPG');}
+  function voicePath(i){return ASSET+'voice/'+cur.folder+'/'+encodeURIComponent('page  ('+(i+1)+').mp3');}
   function stopAudio(){if(audio){audio.pause();audio.onended=null;audio=null;}clearTimeout(autoTimer);}
   window.stopPicBookAudio=stopAudio;
 
