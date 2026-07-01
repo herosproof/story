@@ -163,7 +163,7 @@ ruby rt{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.52em;c
 .side-cover img{width:100%;height:100%;object-fit:cover;border-radius:10px;}
 .shelf-sub{text-align:center;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.92rem;color:var(--purple-light);line-height:1.75;margin:-8px 0 18px;}
 
-.npc-note{background:rgba(245,238,220,.9);border:1px dashed rgba(138,103,18,.45);border-radius:16px;padding:20px;margin-top:22px;text-align:center;transition:border-color .2s,background .2s;}
+.npc-note{background:#e8d7c3;border:1px dashed rgba(138,103,18,.45);border-radius:16px;padding:20px;margin-top:22px;text-align:center;transition:border-color .2s,background .2s;}
 .npc-note:hover{background:rgba(245,238,220,.97);border-color:rgba(138,103,18,.7);}
 .npc-note .em{font-size:1.8rem;letter-spacing:.2em;display:block;margin-bottom:9px;}
 .npc-note p{font-size:.96rem;color:var(--text-soft);line-height:1.75;}
@@ -248,12 +248,10 @@ footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgb
         <button class="pbtn" id="bk-auto" aria-pressed="false">▶ Auto</button>
         <span class="book-speed" aria-label="Reading speed">
           <span class="lab">🔊</span>
-          <button data-rate="0.5">0.5×</button>
           <button data-rate="0.75">0.75×</button>
           <button data-rate="0.9">0.9×</button>
           <button class="active" data-rate="1">1×</button>
           <button data-rate="1.1">1.1×</button>
-          <button data-rate="1.25">1.25×</button>
         </span>
         <button class="pbtn" id="bk-fs">⛶</button>
         <button class="pbtn" id="bk-restart">↺</button>
@@ -294,16 +292,15 @@ footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgb
       <div class="book-top">
         <span class="book-counter" id="pbk-counter"></span>
         <button class="pbtn" id="pbk-narrate" title="Play narration / 読(よ)み上(あ)げ">🔊 Narrate</button>
+        <button class="pbtn" id="pbk-replay" title="Replay narration / もう一度">🔁 Replay</button>
         <button class="pbtn" id="pbk-auto" title="Auto-advance / 自動再生">▶ Auto</button>
         <button class="pbtn" id="pbk-view" title="Spread view / 見開き表示">📖 Spread</button>
         <span class="book-speed" aria-label="Narration speed">
           <span class="lab">🔊</span>
-          <button data-rate="0.5">0.5×</button>
           <button data-rate="0.75">0.75×</button>
           <button data-rate="0.9">0.9×</button>
           <button class="active" data-rate="1">1×</button>
           <button data-rate="1.1">1.1×</button>
-          <button data-rate="1.25">1.25×</button>
         </span>
         <button class="pbtn" id="pbk-fs" title="Fullscreen / 全画面">⛶</button>
         <button class="pbtn" id="pbk-restart" title="Restart / はじめから">↺</button>
@@ -521,11 +518,12 @@ tabs.forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
    ════ PICTURE BOOK DATA (image-page readers: Lumi Lights the Way, Candy Cats) ════
    See PICBOOKS below. Pages live at:
      assets/lumi-lights/page (1).JPG … page (61).JPG      — page (1) doubles as the cover
-     assets/candy-cats/page (1).JPG … page (18).JPG       — page (1) doubles as the cover
-   Optional one-track narration per page (only on pages with text; illustration-only
-   pages just stay silent — missing files fail silently either way):
-     assets/voice/lumi-lights/page (1).mp3 … page (61).mp3
-     assets/voice/candy-cats/page (1).mp3 … page (18).mp3
+     assets/lumi-lights/page  (1).JPG … page  (61).JPG
+     assets/candy-cats/page  (1).JPG … page  (21).JPG
+   Optional one-track narration per spread (only spreads with text get audio;
+   front/back matter and cover spreads stay silent):
+     assets/voice/lumi-lights/spread_01.mp3 … spread_30.mp3
+     assets/voice/candy-cats/spread_01.mp3 … spread_08.mp3
    Narration speed is adjustable (0.5×–1.25×) rather than recorded twice.
 */
 const ASSET='assets/';
@@ -614,7 +612,7 @@ const PICBOOKS={
     folder:'candy-cats',pageCount:21,
     storyStart:4,   /* pages 1-3 are cover + front matter (no audio track) */
     storyEnd:19,    /* pages 20-21 are back matter (no audio track) */
-    filePrefix:'page (', /* ONE space — use when batch-renaming your new export */
+    filePrefix:'page (', /* ONE space — matches your new uploaded filenames */
     emoji:'🍬',
     titleEn:'The Candy Cats of Candy Forest',titleJp:'キャンディーのもりのキャンディーキャットたち',
     subEn:'Sweet NPC friends from a forest of candy! 🍬🐱',
@@ -775,7 +773,7 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
   const leftSlot=$('pbk-left'),rightSlot=$('pbk-right'),spineEl=$('pbk-spine');
   const leftImg=$('pbk-img-left'),rightImg=$('pbk-img-right');
   const counterEl=$('pbk-counter'),bar=$('pbk-bar');
-  const prevBtn=$('pbk-prev'),fwdBtn=$('pbk-fwd'),narrateBtn=$('pbk-narrate'),autoBtn=$('pbk-auto'),viewBtn=$('pbk-view'),fsBtn=$('pbk-fs');
+  const prevBtn=$('pbk-prev'),fwdBtn=$('pbk-fwd'),narrateBtn=$('pbk-narrate'),replayBtn=$('pbk-replay'),autoBtn=$('pbk-auto'),viewBtn=$('pbk-view'),fsBtn=$('pbk-fs');
   const coverImg=$('pbk-cover-img'),ovEmoji=$('pbk-ov-emoji'),ovTitle=$('pbk-ov-title'),ovSub=$('pbk-ov-sub'),pdfLink=$('pbk-pdf-link');
   const readerTitle=$('reader-title');
   const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -945,6 +943,11 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
   });
 
   narrateBtn.addEventListener('click',e=>{
+    e.stopPropagation();if(!started)return;
+    if(spreadMode){playNarration(curSpreads[spreadIdx].audioTrack);}
+    else{const si=curSpreads.findIndex(sp=>sp.left===singlePageIdx||sp.right===singlePageIdx);const sp=si>=0?curSpreads[si]:null;playNarration((sp&&!sp.solo&&sp.left===singlePageIdx)?sp.audioTrack:0);}
+  });
+  replayBtn.addEventListener('click',e=>{
     e.stopPropagation();if(!started)return;
     if(spreadMode){playNarration(curSpreads[spreadIdx].audioTrack);}
     else{const si=curSpreads.findIndex(sp=>sp.left===singlePageIdx||sp.right===singlePageIdx);const sp=si>=0?curSpreads[si]:null;playNarration((sp&&!sp.solo&&sp.left===singlePageIdx)?sp.audioTrack:0);}
