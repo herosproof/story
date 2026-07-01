@@ -163,11 +163,11 @@ ruby rt{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.52em;c
 .side-cover img{width:100%;height:100%;object-fit:cover;border-radius:10px;}
 .shelf-sub{text-align:center;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.92rem;color:var(--purple-light);line-height:1.75;margin:-8px 0 18px;}
 
-.npc-note{background:rgba(245,238,220,.06);border:1px dashed rgba(201,160,48,.35);border-radius:16px;padding:20px;margin-top:22px;text-align:center;transition:border-color .2s,background .2s;}
-.npc-note:hover{background:rgba(245,238,220,.1);border-color:rgba(201,160,48,.55);}
+.npc-note{background:rgba(245,238,220,.9);border:1px dashed rgba(138,103,18,.45);border-radius:16px;padding:20px;margin-top:22px;text-align:center;transition:border-color .2s,background .2s;}
+.npc-note:hover{background:rgba(245,238,220,.97);border-color:rgba(138,103,18,.7);}
 .npc-note .em{font-size:1.8rem;letter-spacing:.2em;display:block;margin-bottom:9px;}
-.npc-note p{font-size:.96rem;color:var(--purple-light);line-height:1.75;}
-.npc-note .jp{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;color:var(--text-muted);}
+.npc-note p{font-size:.96rem;color:var(--text-soft);line-height:1.75;}
+.npc-note .jp{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;color:rgba(70,48,30,.82);}
 
 .notes-intro{text-align:center;color:var(--purple-light);font-size:1rem;line-height:1.8;margin-bottom:26px;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;}
 .note-card{background:var(--card-bg);border:1px solid var(--border-gold);border-radius:18px;padding:20px 22px;margin-bottom:15px;color:var(--text-dark);box-shadow:0 4px 20px var(--shadow);}
@@ -406,7 +406,7 @@ footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgb
       </div>
     </div>
 
-    <a class="npc-note" href="characters.html" style="display:block;text-decoration:none;cursor:pointer;">
+    <a class="npc-note" href="https://herosproof.github.io/characters/" style="display:block;text-decoration:none;cursor:pointer;">
       <span class="em">🧚 🧝 🍳 👑 👸 🐉</span>
       <p>Want to meet the cast? Lumi, the Heroes, and every guardian are waiting! 💜<br>
          <span class="jp">キャラクターに会(あ)いたい？ルミやヒーローたち、守護者(しゅごしゃ)みんなが待(ま)ってるよ。</span></p>
@@ -603,6 +603,7 @@ const PICBOOKS={
     folder:'lumi-lights',pageCount:61,
     pairFlip:false, /* left slot=even(text), right slot=odd(illustration) */
     soloPages:[4],  /* page 4 = dedication — always shown alone, never paired */
+    filePrefix:'page  (', /* TWO spaces — matches the original uploaded filenames */
     emoji:'🎃',
     titleEn:'Lumi Lights the Way',titleJp:'ルミがてらすみち',
     subEn:"Little Lumi's very first story — made for Halloween! 🎃",
@@ -610,8 +611,10 @@ const PICBOOKS={
     pdf:'lumi-lights-the-way.pdf',
   },
   'candy-cats':{
-    folder:'candy-cats',pageCount:18,
-    pairFlip:true, /* left slot=odd(text), right slot=even(illustration) — matches current filenames */
+    folder:'candy-cats',pageCount:21,
+    storyStart:4,   /* pages 1-3 are cover + front matter (no audio track) */
+    storyEnd:19,    /* pages 20-21 are back matter (no audio track) */
+    filePrefix:'page (', /* ONE space — use when batch-renaming your new export */
     emoji:'🍬',
     titleEn:'The Candy Cats of Candy Forest',titleJp:'キャンディーのもりのキャンディーキャットたち',
     subEn:'Sweet NPC friends from a forest of candy! 🍬🐱',
@@ -788,22 +791,34 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
      AUDIO:  assets/voice/{folder}/spread_NN.mp3
        • One recording per text+illustration spread, numbered from 01.
        • soloPages (cover, dedication) have audioTrack=0 = no recording needed.
-       • So if page 4 is a solo dedication: spread_01=pages2+3, spread_02=pages5+6, etc.
+       • storyStart/storyEnd: pages outside this range are front/back matter — shown normally
+         but audioTrack=0, so the track counter only counts story spreads.
        • Missing files fail silently; auto-advance timer fires after FALLBACK_MS instead.
   */
-  function pagePath(i){return ASSET+cur.folder+'/'+encodeURIComponent('page  ('+(i+1)+').JPG');}
+  function pagePath(i){
+    /* filePrefix: the per-book filename pattern before the page number.
+       Lumi Lights: 'page  (' (two spaces — existing uploaded files keep their names)
+       Candy Cats:  'page ('  (one space — use when batch-renaming the new export) */
+    const prefix=cur.filePrefix||'page  (';
+    return ASSET+cur.folder+'/'+encodeURIComponent(prefix+(i+1)+').JPG');
+  }
   function voicePath(track){const n=String(track).padStart(2,'0');return ASSET+'voice/'+cur.folder+'/spread_'+n+'.mp3';}
 
   /* ── buildSpreads ──
      Constructs the ordered list of spreads for the current book.
-     soloPages: page numbers always shown alone (centered), not paired with a neighbour.
-     Pages in a normal spread appear in reading order: lower number = left slot.
-     audioTrack 0 = no narration (cover / solo page).
-     audioTrack 1,2,3... = spread_01.mp3, spread_02.mp3 … (numbered without gaps,
-     skipping solo pages so the user's recording numbers stay consecutive).
+     soloPages:  page numbers always shown alone (centered), e.g. dedications.
+     storyStart: first page that belongs to story content (gets an audio track number).
+                 Pages before storyStart are front matter — shown as normal spreads but
+                 audioTrack=0 so the track counter starts at the right place.
+     storyEnd:   last story page. Pages after storyEnd are back matter — also audioTrack=0.
+                 Defaults to pageCount if omitted.
+     audioTrack 0 = no narration (cover / solo / front+back matter).
+     audioTrack 1,2,3... = spread_01.mp3, spread_02.mp3 … (consecutive, no gaps).
   */
   function buildSpreads(book){
     const solos=new Set(book.soloPages||[]);
+    const storyStart=book.storyStart||2;
+    const storyEnd=book.storyEnd||book.pageCount;
     const out=[{left:null,right:1,solo:true,audioTrack:0}]; // cover always solo
     let p=2,track=1;
     while(p<=book.pageCount){
@@ -812,7 +827,8 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
         p++;
       } else {
         const r=(p+1<=book.pageCount)?p+1:null;
-        out.push({left:p,right:r,solo:false,audioTrack:track++});
+        const isStory=(p>=storyStart&&p<=storyEnd);
+        out.push({left:p,right:r,solo:false,audioTrack:isStory?track++:0});
         p+=2;
       }
     }
